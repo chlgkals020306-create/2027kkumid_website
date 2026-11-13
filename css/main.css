@@ -133,7 +133,6 @@ body.menu-open .nav__logo { opacity: 1 !important; pointer-events: auto !importa
   color: #fff; cursor: pointer; pointer-events: auto;
 }
 .nav--sub .nav__menu { color: var(--ink); }
-.nav__menu.is-shifting { transition: transform 0.55s var(--ease-out); }   /* only while the menu opens / closes on the home page */
 .nav__menu span {
   display: block; width: calc(28.5px * var(--nk)); height: 1px; background: currentColor;
   transition: transform 0.35s var(--ease-out);

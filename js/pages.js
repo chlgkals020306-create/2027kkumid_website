@@ -83,7 +83,8 @@
     qaIn:     [1.0, 1.8],         // interview rows arrive
     qaOut:    [2.4, 2.95],        // … and leave, one after another
     photoOut: [2.7, 3.1],         // the photo goes last → white
-    worksIn:  [3.3, 4.0]          // works build in on the white ground
+    worksAt:  3.3,                // past this point the works fade in by themselves (not scrubbed by scroll) …
+    worksOff: 3.2                 // … and scrolling back above this point lets them fade out again
   };
   function designer() {
     const d = S.get.designer(S.param('id')) || S.designers[0];
@@ -115,7 +116,7 @@
     const worksBox = $('[data-works]', stage), bar = $('[data-bar]', stage), thumb = $('[data-thumb]', stage), strip = $('[data-strip]', stage), cards = $$('.wcard', stage);
     track.style.setProperty('--dz-screens', DZ.end + 1);
 
-    let u = 1, vw = 0, vh = 0, top = 0, target = 0, current = 0, drawn = -1, dirty = true, live = false;
+    let u = 1, w = 1, vw = 0, vh = 0, top = 0, target = 0, current = 0, drawn = -1, dirty = true, live = false, shown = false;
     let max = 0, barW = 0, thumbW = 0;
     const stagger = (t, n, count, k) => { const w = 1 / (1 + (count - 1) * k); return clamp((t - n * k * w) / w); };
 
@@ -129,11 +130,29 @@
       vw = window.innerWidth; vh = window.innerHeight;
       u = Math.min(vw / 1293, vh / 850);
       top = track.getBoundingClientRect().top + window.scrollY;
+      /* Works row (Figma "designer_works"): laid out in w = the frame fitted to the window WIDTH, so on every
+         screen two works show in full and the third one runs off the right edge, as in the frame.
+         Only the vertical placement gives way on windows wider than the frame: the row first moves up
+         from its Figma position (bar at y 214), then — on very wide windows — the images lose a little height. */
+      w = vw / 1293;
       const gutter = RT.gutter();
-      const total = strip.scrollWidth + gutter, visible = vw - 287 * u;
-      const overflow = Math.max(0, total - visible), nudge = 96 * u;
-      // Three works usually fit on screen. The row still follows the pointer a little (at least `nudge`),
-      // and the bar above it travels with it — thumb length as drawn in Figma (719 of 1033).
+      stage.style.removeProperty('--dz-bar'); stage.style.removeProperty('--dz-media');
+      if (cards.length && !flow.matches) {
+        const media = $('.wcard__media', cards[0]);
+        const text = cards[0].offsetHeight - media.offsetHeight;             // name · title · subject above the image
+        const floor = vh - 40 * u;                                             // keep this much clear below the row
+        const barMin = 69 * RT.navScale() + 26 * u;                            // … and this much under the navigation
+        const need = 30 * w + text + 435 * w;                                  // bar → bottom of the image
+        const barY = Math.max(barMin, Math.min(214 * w, floor - need));
+        const mediaH = Math.min(435 * w, Math.max(200 * w, floor - barY - 30 * w - text));
+        if (barY < 214 * w - 0.5) stage.style.setProperty('--dz-bar', barY.toFixed(1) + 'px');
+        if (mediaH < 435 * w - 0.5) stage.style.setProperty('--dz-media', mediaH.toFixed(1) + 'px');
+      }
+      const total = strip.scrollWidth + gutter, visible = vw - 287 * w;
+      const overflow = Math.max(0, total - visible), nudge = 96 * w;
+      // Scrolling ends where the last (third) work stands in full, one page margin away from the right edge —
+      // nothing but the works themselves ever scrolls into view. One or two works leave nothing to scroll;
+      // the row then only follows the pointer a little (`nudge`), bar drawn as in Figma (719 of 1033).
       max = Math.max(overflow, nudge);
       barW = bar.clientWidth; thumbW = barW * (overflow > nudge ? clamp(visible / total, 0.18, 0.9) : 719 / 1033);
       thumb.style.width = thumbW.toFixed(1) + 'px';
@@ -165,18 +184,14 @@
         n.style.transform = `translate3d(0,${(((1 - v) * 44 - o * 30) * u).toFixed(1)}px,0)`;
       });
       // works
-      const tw = seg(p, DZ.worksIn);
-      worksBox.style.visibility = tw > 0 ? 'visible' : 'hidden';
-      bar.style.opacity = ease.out(clamp(tw / 0.45)).toFixed(3);
-      cards.forEach((n, k) => {
-        const v = ease.out(stagger(clamp((tw - 0.1) / 0.9), Math.min(k, 4), Math.min(cards.length, 5), 0.5));
-        n.style.opacity = v.toFixed(3);
-        n.style.transform = `translate3d(0,${((1 - v) * 56 * u).toFixed(1)}px,0)`;
-      });
-      live = tw > 0.7;
+      // Not scrubbed: once the scroll passes DZ.worksAt the bar and the works fade in on their own, one after
+      // another (timing: css/pages.css › .dz__works.is-in); scrolling back above DZ.worksOff fades them out.
+      const next = shown ? p >= DZ.worksOff : p >= DZ.worksAt;
+      if (next !== shown) { shown = next; worksBox.classList.toggle('is-in', shown); }
+      live = shown;
       worksBox.style.pointerEvents = live ? '' : 'none';
     }
-    function clear() { [photo, bar, worksBox, strip, ...outs, ...qa, ...cards].forEach((n) => n.removeAttribute('style')); drawn = -1; }
+    function clear() { [photo, bar, worksBox, strip, ...outs, ...qa, ...cards].forEach((n) => n.removeAttribute('style')); stage.style.removeProperty('--dz-bar'); stage.style.removeProperty('--dz-media'); worksBox.classList.remove('is-in'); shown = false; drawn = -1; }
     function frame() {
       if (flow.matches) { if (drawn !== -2) { clear(); drawn = -2; } requestAnimationFrame(frame); return; }
       if (drawn === -2) { measure(); drawn = -1; }

@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Rare Taste — sub pages
+   1. Page frame & reveal   2. Cards & grids   3. Search   4. Designers
+   5. Designer (profile → interview → works)   6. Work   7. Introduce
+   8. Works & works-group   9. Responsive   10. Reduced motion
+   Design reference: Figma "졸준위 웹사이트" › designer, designer_profile, designer_interview,
+   designer_works, works_detail, introduce, works_1, works_2 (1293px frames)
+   Tokens, type, navigation, menu and footer come from css/main.css.
+   ========================================================================== */
+
+/* 1. Page frame & reveal ---------------------------------------------------- */
+.page { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+.page > main { flex: 1; }
+.page .footer { margin-top: 0; }
+.page-head { padding: max(calc(104px * var(--fl)), calc(140 * var(--px))) var(--gutter) 0; }                     /* title at y 140 */
+.t-page {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; white-space: nowrap;
+  font-size: max(calc(40px * var(--fl)), calc(64 * var(--px))); line-height: 1.2288; --lh: 1.2288em; letter-spacing: -0.03125em;   /* 64 / 78.64 */
+  color: var(--orange);
+}
+.t-page--two { line-height: 1.172; --lh: 1.172em; }                                        /* two-line titles: 64 / 75 */
+.t-sub { font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.503; color: rgba(15, 7, 2, 0.8); }
+
+/* Reveal (js/chrome.js › RT.reveal). Same motion family as the home page: a short rise + fade. */
+[data-rv] { opacity: 0; transform: translate3d(0, 30px, 0); will-change: transform, opacity; }
+[data-rv].is-in {
+  opacity: 1; transform: none;
+  transition: opacity 0.9s var(--ease-out) var(--d, 0s), transform 1.1s var(--ease-out) var(--d, 0s);
+}
+[data-rv="lines"], [data-rv="lines"].is-in { opacity: 1; transform: none; transition: none; }
+[data-rv="lines"] .line { opacity: 0; transform: translate3d(0, 90%, 0); will-change: transform, opacity; }
+[data-rv="lines"].is-in .line {
+  opacity: 1; transform: none;
+  transition: opacity 0.8s var(--ease-out) calc(var(--d, 0s) + var(--i, 0) * 0.1s), transform 1s var(--ease-out) calc(var(--d, 0s) + var(--i, 0) * 0.1s);
+}
+[data-rv="rule"], [data-rv="rule"].is-in { opacity: 1; transform: scaleX(0); transform-origin: 0 50%; }
+[data-rv="rule"].is-in { transform: none; transition: transform 1.2s var(--ease-in-out) var(--d, 0s); }
+[data-rv="fade"] { transform: none; }
+
+/* 2. Cards & grids ----------------------------------------------------------
+   The frame never changes; on hover the picture grows a little and darkens to 50% black,
+   and the information appears bottom-left with a 30px margin. */
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: max(calc(4px * var(--fl)), calc(5 * var(--px))); padding: 0 var(--gutter); }
+.card { position: relative; display: block; aspect-ratio: 299.4 / 399.6; overflow: hidden; background: #d9d9d9; color: #fff; isolation: isolate; }
+.card[hidden] { display: none; }
+.card__media, .card__media img, .card__ph { position: absolute; inset: 0; width: 100%; height: 100%; }
+.card__media { transition: transform 0.9s var(--ease-out); will-change: transform; }
+.card__media img { object-fit: cover; }
+.card__ph {
+  display: grid; place-items: center; background: #d9d9d9;
+  font-family: var(--font-body); font-weight: 600; font-size: max(calc(12px * var(--fl)), calc(12.9 * var(--px))); letter-spacing: 0.08em; color: rgba(15, 7, 3, 0.22);
+}
+.card__shade { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity 0.45s ease; }
+.card__info {
+  position: absolute; left: calc(30 * var(--sp)); right: calc(30 * var(--sp)); bottom: calc(30 * var(--sp));
+  opacity: 0; transform: translate3d(0, 10px, 0);
+  transition: opacity 0.3s ease, transform 0.5s var(--ease-out);
+}
+.card__info strong { display: block; font-weight: 700; font-size: max(calc(17px * var(--fl)), calc(20 * var(--px))); line-height: 1.32; letter-spacing: -0.03em; }
+.card__info span { display: block; margin-top: 2px; font-weight: 500; font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.4; letter-spacing: -0.03em; opacity: 0.8; }
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card__media { transform: scale(1.06); }
+  .card:hover .card__shade { opacity: 0.5; }
+  .card:hover .card__info { opacity: 1; transform: none; transition-delay: 0.05s; }
+}
+.card:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; }
+.card:focus-visible .card__media { transform: scale(1.06); }
+.card:focus-visible .card__shade { opacity: 0.5; }
+.card:focus-visible .card__info { opacity: 1; transform: none; }
+.grid__empty { grid-column: 1 / -1; padding: 60px 0 120px; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); color: rgba(15, 7, 3, 0.5); }
+
+/* 3. Search ------------------------------------------------------------------ */
+.search { width: calc((100% - 3 * max(calc(4px * var(--fl)), calc(5 * var(--px)))) / 4); min-width: 250px; margin: max(calc(30px * var(--fl)), calc(48 * var(--px))) 0 0 auto; }
+.search-row { padding: 0 var(--gutter); }
+.search__field { position: relative; display: flex; align-items: center; height: calc(34 * var(--sp)); border-bottom: max(calc(1.5px * var(--fl)), calc(2 * var(--px))) solid var(--ink); }
+.search__field input {
+  flex: 1; min-width: 0; height: 100%; padding: 0 calc(40 * var(--sp)) 0 1px; border: 0; outline: 0; background: none; border-radius: 0;
+  font: 600 max(calc(13px * var(--fl)), calc(16 * var(--px)))/1.48 var(--font-body); letter-spacing: 0.008em; color: var(--ink);
+  -webkit-appearance: none; appearance: none;
+}
+.search__field input::placeholder { color: rgba(15, 7, 3, 0.2); }
+.search__field input::-webkit-search-cancel-button { display: none; }
+.search__btn { position: absolute; right: calc(6 * var(--sp)); top: 50%; width: calc(25 * var(--sp)); height: calc(25 * var(--sp)); margin-top: calc(-14 * var(--sp)); cursor: pointer; }
+.search__btn img { width: 100%; height: 100%; }
+.search__field:focus-within { border-bottom-color: var(--orange); }
+.search__hint { display: flex; align-items: center; gap: calc(6 * var(--sp)); margin-top: calc(9.5 * var(--sp)); font-weight: 500; font-size: max(calc(10px * var(--fl)), calc(10 * var(--px))); line-height: 1.48; letter-spacing: 0.008em; }
+.search__hint img { width: calc(12 * var(--sp)); height: calc(12 * var(--sp)); }
+
+/* 4. Designers ---------------------------------------------------------------- */
+.designers .grid, .group .grid { margin-top: max(calc(26px * var(--fl)), calc(37 * var(--px))); }
+.group .search { margin-top: max(calc(24px * var(--fl)), calc(38 * var(--px))); }
+.designers main { padding-bottom: max(calc(28px * var(--fl)), calc(33.6 * var(--px))); }
+
+/* 5. Designer ------------------------------------------------------------------
+   One pinned screen, driven by scroll (js/pages.js › designer):
+   profile → the texts leave, the photo keeps its place and only changes size and ratio →
+   interview → everything leaves → white → works.
+   --u = one Figma pixel of the 1293 × 850 frame, so every measure below reads like the design. */
+.dz { --u: min(100vw / 1293, 100vh / 850); --w: calc(100vw / 1293); }
+/* --w: the unit of the works row (Figma "designer_works") = the 1293px frame fitted to the window WIDTH,
+   so the row keeps the proportions of the frame on every screen: two works in full, the third one running
+   off the right edge (x 287 · 667 · 1047, 350 wide → 104 of the third are cut). */
+.dz__track { height: calc(var(--dz-screens, 5.4) * 100vh); height: calc(var(--dz-screens, 5.4) * 100svh); }
+.dz__stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+.dz__photo { position: absolute; right: 0; top: calc(91 * var(--u)); width: calc(513 * var(--u)); height: calc(513 * var(--u)); overflow: hidden; background: #ececef; will-change: width, height, opacity; }
+.dz__photo img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.04); transition: opacity 1.1s ease, transform 1.6s var(--ease-out); }
+.is-ready .dz__photo img { opacity: 1; transform: none; }
+
+.dz__name {
+  position: absolute; left: var(--gutter); top: calc(376 * var(--u)); margin-left: calc(4 * var(--u));
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; white-space: nowrap; color: var(--ink);
+  font-size: calc(128 * var(--u)); line-height: 0.9219; --lh: 0.9219em; letter-spacing: -0.03125em;                  /* 128 / 118 */
+}
+.dz__intro { position: absolute; left: var(--gutter); top: calc(626 * var(--u)); max-width: calc(700 * var(--u)); word-break: keep-all; overflow-wrap: anywhere; font-weight: 600; font-size: max(calc(14px * var(--fl)), calc(20 * var(--u))); line-height: 1.5; color: rgba(15, 7, 2, 0.8); }
+.dz__contact { position: absolute; right: 0; top: calc(626 * var(--u)); width: calc(513 * var(--u)); font-size: max(calc(13px * var(--fl)), calc(16 * var(--u))); line-height: 1.2; color: var(--ink); }
+.dz__contact .dz-l { display: grid; grid-template-columns: calc(123 * var(--u)) minmax(0, 1fr); margin-bottom: calc(9.8 * var(--u)); }
+.dz__contact dt { font-weight: 600; letter-spacing: -0.02em; }
+.dz__contact dd { margin: 0; }
+.dz__contact a:hover { color: var(--orange); }
+/* profile lines: the inner .line builds in when the page enters, the outer .dz-l is scrubbed out by scroll */
+.dz-l { display: block; will-change: transform, opacity; }
+.dz-l > .line { opacity: 0; transform: translate3d(0, 90%, 0); }
+.is-ready .dz-l > .line { opacity: 1; transform: none; transition: opacity 0.85s var(--ease-out) calc(0.25s + var(--i, 0) * 0.11s), transform 1.05s var(--ease-out) calc(0.25s + var(--i, 0) * 0.11s); }
+
+.dz__interview { position: absolute; left: var(--gutter); top: calc(305 * var(--u)); width: calc(597 * var(--u)); }
+.dz__qa {
+  display: grid; grid-template-columns: calc(247 * var(--u)) minmax(0, 1fr); align-items: start;
+  min-height: calc(165 * var(--u)); padding-top: calc(25 * var(--u));
+  border-top: 1px solid rgba(15, 7, 3, 0.16);
+  font-size: max(calc(13px * var(--fl)), calc(16 * var(--u))); letter-spacing: -0.03em; color: var(--ink);
+  opacity: 0; will-change: transform, opacity;
+}
+.dz__qa dt { font-weight: 700; line-height: 1.32; }
+.dz__qa dd { margin: 0; line-height: 1.42; word-break: keep-all; overflow-wrap: anywhere; padding-bottom: calc(22 * var(--u)); }
+
+.dz__works { position: absolute; inset: 0; visibility: hidden; transition: visibility 0s linear 0.5s; }
+/* .is-in is set by js/pages.js once the scroll passes DZ.worksAt: the bar, then the works fade in by themselves,
+   left → right (--i). Leaving is quicker and all at once. */
+.dz__works.is-in { visibility: visible; transition-delay: 0s; }
+.dz__bar { position: absolute; left: calc(287 * var(--w)); right: 0; top: var(--dz-bar, calc(214 * var(--w))); height: 21px; margin-top: -10px; cursor: pointer; opacity: 0; touch-action: none; transition: opacity 0.4s ease; }
+.dz__works.is-in .dz__bar { opacity: 1; transition: opacity 0.9s ease; }
+.dz__bar::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: #dcdcdc; }
+.dz__thumb { position: absolute; left: 0; top: 10px; height: 2px; width: 60%; background: var(--orange); will-change: transform, width; }
+.dz__strip { position: absolute; left: calc(287 * var(--w)); top: calc(var(--dz-bar, calc(214 * var(--w))) + 30 * var(--w)); display: flex; gap: calc(30 * var(--w)); will-change: transform; }
+.wcard { display: block; width: calc(350 * var(--w)); flex: none; color: #000; opacity: 0; transform: translate3d(0, calc(24 * var(--w)), 0); transition: opacity 0.45s ease, transform 0.45s ease; will-change: transform, opacity; }
+.wcard:nth-child(2) { --i: 1; }
+.wcard:nth-child(3) { --i: 2; }
+.dz__works.is-in .wcard { opacity: 1; transform: none; transition: opacity 1.2s ease calc(0.2s + var(--i, 0) * 0.22s), transform 1.4s var(--ease-out) calc(0.2s + var(--i, 0) * 0.22s); }
+.wcard__name { display: block; font-weight: 700; font-size: max(calc(15px * var(--fl)), calc(20 * var(--w))); line-height: 1.32; letter-spacing: -0.03em; }
+.wcard__title { display: block; margin-top: calc(15.5 * var(--w)); font-weight: 500; font-size: max(calc(13px * var(--fl)), calc(16 * var(--w))); line-height: 1.32; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wcard__group { display: block; margin-top: calc(6 * var(--w)); font-size: max(calc(13px * var(--fl)), calc(16 * var(--w))); line-height: 1.32; letter-spacing: -0.03em; }
+.wcard__media { position: relative; display: block; height: var(--dz-media, calc(435 * var(--w))); margin-top: calc(20 * var(--w)); overflow: hidden; background: #d9d9d9; }
+.wcard__media .card__media { position: absolute; inset: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .wcard:hover .card__media { transform: scale(1.06); }
+  .wcard:hover .card__shade { opacity: 0.5; }
+}
+.wcard:focus-visible { outline: 2px solid var(--orange); outline-offset: 6px; }
+.dz__scroll { position: absolute; left: 50%; bottom: calc(26 * var(--u)); transform: translateX(-50%); color: rgba(15, 7, 3, 0.55); }
+.dz__scroll .scroll-ind__line { background: rgba(15, 7, 3, 0.14); height: calc(40 * var(--u)); }
+.dz__scroll .scroll-ind__line::after { background: var(--ink); }
+
+/* 6. Work (works_detail) --------------------------------------------------------- */
+.work-head { position: relative; display: grid; grid-template-columns: calc(60.33vw - var(--gutter)) minmax(0, 1fr); align-items: start; padding: max(calc(96px * var(--fl)), calc(125 * var(--px))) var(--gutter) max(calc(14px * var(--fl)), calc(22.4 * var(--px))); }   /* contact column starts at x 780 */
+.work-head__name {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; white-space: nowrap; color: var(--ink);
+  font-size: max(calc(30px * var(--fl)), calc(48 * var(--px))); line-height: 1.6384; --lh: 1.6384em; letter-spacing: -0.03125em;                /* 48 / 78.64 */
+}
+.work-head__contact { margin-top: max(calc(12px * var(--fl)), calc(23 * var(--px))); font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.2; }
+.work-head__contact div { display: grid; grid-template-columns: max(calc(86px * var(--fl)), calc(123 * var(--px))) minmax(0, 1fr); }
+.work-head__contact div + div { margin-top: 0.62em; }
+.work-head__contact dt { font-weight: 600; letter-spacing: -0.02em; }
+.work-head__contact dd { margin: 0; }
+.work-head__contact a:hover { color: var(--orange); }
+.work-head__name a:hover { color: var(--orange); }
+.work-head--team { row-gap: max(calc(4px * var(--fl)), calc(6 * var(--px))); }                 /* team work: one row per designer */
+.work-head--team .work-head__name { margin: 0; }
+.work-media { display: block; }
+.work-media__item { position: relative; display: block; width: 100%; aspect-ratio: var(--ar, 16 / 9); overflow: hidden; background: #d9d9d9; }   /* --ar: the image's own proportions, set once it has loaded */
+.work-media__item--poster { aspect-ratio: auto; display: grid; place-items: center; padding: max(calc(40px * var(--fl)), calc(64 * var(--px))) var(--gutter); background: #f2f2f2 !important; }
+.work-media__item--poster img { width: min(100%, calc(80svh * 0.8)) !important; height: auto !important; }
+.work-media__item:nth-child(4n + 2) { background: #cfcfcf; }
+.work-media__item:nth-child(4n + 3) { background: #e2e2e2; }
+.work-media__item:nth-child(4n + 4) { background: #c8c8c8; }
+.work-media__item img { width: 100%; height: 100%; object-fit: cover; }
+.work-media__ph { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 0.5em; text-align: center; color: rgba(15, 7, 3, 0.3); }
+.work-media__ph b { font-family: var(--font-display); font-weight: 700; font-size: max(calc(34px * var(--fl)), calc(64 * var(--px))); line-height: 1; letter-spacing: -0.03em; }
+.work-media__ph span { font-weight: 500; font-size: max(calc(12px * var(--fl)), calc(14 * var(--px))); letter-spacing: 0.02em; }
+.work-media__item > * { opacity: 0; transition: opacity 1.1s ease 0.1s; }
+.work-media__item.is-in > * { opacity: 1; }
+.work-media__item[data-rv] { opacity: 1; transform: none; }
+
+/* 7. Introduce --------------------------------------------------------------------
+   Professors: every measure is the Figma value × --pu (1/1293 of the window width), so the row keeps
+   exactly the proportion it has in the design: 8 portraits, 136.8 × 181, the active one 226 × 299.6,
+   gap 4.9, centred. The row never moves — the portrait under the pointer grows, the one that was
+   large shrinks, and the caption fades in underneath (js/pages.js › introduce). */
+.prof { --pu: calc(100vw / 1293); position: relative; display: flex; justify-content: center; height: calc(384 * var(--pu)); margin-top: max(calc(64px * var(--fl)), calc(135 * var(--px))); overflow: hidden; }
+.prof__strip { flex: none; height: calc(300 * var(--pu)); display: flex; align-items: center; gap: calc(4.917 * var(--pu)); }
+.prof__item { position: relative; flex: none; width: calc(136.8 * var(--pu)); height: calc(181 * var(--pu)); transition: width 0.7s var(--ease-out), height 0.7s var(--ease-out); cursor: default; outline-offset: 3px; }
+.prof__item.is-on { width: calc(226 * var(--pu)); height: calc(299.6 * var(--pu)); }
+.prof__pic { position: absolute; inset: 0; overflow: hidden; background: #d9d9d9; }
+.prof__pic img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; filter: grayscale(1); transition: filter 0.8s ease; }
+.prof__item.is-on .prof__pic img { filter: none; }
+.prof__label { position: absolute; left: 0; top: calc(100% + 13 * var(--pu)); white-space: nowrap; opacity: 0; transform: translate3d(0, 8px, 0); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; }
+.prof__item.is-on .prof__label { opacity: 1; transform: none; transition: opacity 0.6s ease 0.35s, transform 0.8s var(--ease-out) 0.35s; }
+.prof__label strong { display: block; font-weight: 700; font-size: max(calc(15px * var(--fl)), calc(24 * var(--px))); line-height: 1.274; color: var(--ink); }
+.prof__label span { display: block; font-weight: 600; font-size: max(calc(12px * var(--fl)), calc(16 * var(--px))); line-height: 1.6; letter-spacing: -0.002em; color: rgba(15, 7, 2, 0.5); text-transform: uppercase; }
+
+.committee-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: max(calc(120px * var(--fl)), calc(289 * var(--px))) var(--gutter) 0; }   /* title at y 1051 */
+.filters { display: flex; gap: max(calc(12px * var(--fl)), calc(16 * var(--px))); padding-bottom: 2px; }
+.filter { position: relative; padding: 6px 0; font-weight: 600; font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.03; letter-spacing: 0.1em; color: #7a7570; cursor: pointer; transition: color 0.25s ease; white-space: nowrap; }
+.filter::after { content: ""; position: absolute; left: 0; right: 0.1em; bottom: -1px; height: 2px; background: var(--orange); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.45s var(--ease-out); }
+.filter[aria-pressed="true"] { color: var(--orange); }
+.filter[aria-pressed="true"]::after { transform: none; }
+.filter:hover { color: var(--orange); }
+.filter:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.introduce .grid { margin-top: max(calc(48px * var(--fl)), calc(95.9 * var(--px))); }
+.introduce main { padding-bottom: max(calc(48px * var(--fl)), calc(81.5 * var(--px))); }
+.card--static { cursor: default; }
+
+/* 8. Works & works-group ----------------------------------------------------------- */
+.wlist { padding: max(calc(40px * var(--fl)), calc(69 * var(--px))) var(--gutter) max(calc(36px * var(--fl)), calc(41.4 * var(--px))); }
+.wrow { position: relative; display: grid; grid-template-columns: 247fr 473fr 20fr 473fr;   /* 40 · 287 · 780 on the 1293 frame */ padding: max(calc(18px * var(--fl)), calc(30 * var(--px))) 0 max(calc(18px * var(--fl)), calc(30 * var(--px))); color: var(--ink); }
+.wrow__rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--rule); }
+.wrow__title strong { display: block; font-weight: 700; font-size: max(calc(16px * var(--fl)), calc(20 * var(--px))); line-height: 1.529; letter-spacing: -0.002em; transition: color 0.3s ease; }
+.wrow__title span { display: block; font-weight: 700; font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.911; }
+.wrow__desc { font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.5625; }
+.wrow__desc p + p { margin-top: 0; }
+.wrow__media { position: relative; display: block; grid-column: 4; align-self: start; aspect-ratio: 473 / 282; overflow: hidden; background: #d9d9d9; }
+.wrow__media img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--ease-out); will-change: transform; }
+@media (hover: hover) and (pointer: fine) {
+  .wrow:hover .wrow__media img { transform: scale(1.06); }
+  .wrow:hover .wrow__title strong { color: var(--orange); }
+}
+.wrow:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.group main { padding-bottom: max(calc(60px * var(--fl)), calc(155.2 * var(--px))); }
+
+/* 9. Responsive (tablet portrait & narrow) ------------------------------------------ */
+@media (max-width: 860px), (max-aspect-ratio: 1/1) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card__info { left: 16px; right: 16px; bottom: 16px; }
+  .search { width: 100%; min-width: 0; }
+  .t-page { white-space: normal; }
+  .committee-head { flex-direction: column; align-items: flex-start; }
+  .wrow { grid-template-columns: 1fr; row-gap: 14px; }
+  .wrow__media { grid-column: auto; }
+  .work-head { grid-template-columns: 1fr; row-gap: 12px; }
+  .work-head__contact { margin-top: 0; }
+  .work-head__name { white-space: normal; line-height: 1.15; }
+
+  /* Designer: no pinned stage on small screens — the three states simply follow each other. */
+  .dz { --u: calc(100vw / 500); --w: var(--u); }
+  .dz__track { height: auto; }
+  .dz__stage { position: static; height: auto; overflow: visible; padding: 96px 0 56px; }
+  .dz__photo, .dz__name, .dz__intro, .dz__contact, .dz__interview, .dz__works, .dz__bar, .dz__strip { position: static; }
+  .dz__photo { width: 100% !important; height: auto !important; aspect-ratio: 1 / 1; opacity: 1 !important; transform: none !important; }
+  .dz__name { margin: 28px var(--gutter) 0; font-size: 15vw; white-space: normal; }
+  .dz__intro { margin: 14px var(--gutter) 0; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); }
+  .dz__contact { width: auto; margin: 24px var(--gutter) 0; font-size: max(calc(13px * var(--fl)), calc(15 * var(--px))); }
+  .dz__contact .dz-l { grid-template-columns: 96px minmax(0, 1fr); margin-bottom: 8px; }
+  .dz__interview { width: auto; margin: 56px var(--gutter) 0; }
+  .dz__qa { grid-template-columns: 1fr; row-gap: 8px; min-height: 0; padding: 18px 0 26px; font-size: max(calc(13px * var(--fl)), calc(15 * var(--px))); opacity: 1 !important; transform: none !important; }
+  .dz-l { opacity: 1 !important; transform: none !important; }
+  .dz__works { visibility: visible !important; margin-top: 56px; }
+  .dz__bar { display: none; }
+  .dz__strip { padding: 0 var(--gutter); gap: 14px; overflow-x: auto; transform: none !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  .wcard { width: 68vw; opacity: 1 !important; transform: none !important; scroll-snap-align: start; }
+  .wcard__media { height: auto; aspect-ratio: 350 / 435; margin-top: 12px; }
+  .wcard__title { margin-top: 8px; }
+  .dz__scroll { display: none; }
+}
+@media (max-width: 560px) {
+  .prof { --pu: calc(100vw / 620); justify-content: flex-start; overflow-x: auto; padding: 0 var(--gutter); scrollbar-width: none; }
+  .filters { gap: 14px; }
+}
+
+/* 10. Reduced motion — keep the fades, drop the travel ------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  [data-rv], [data-rv="lines"] .line, .dz-l > .line, .wcard { transform: none !important; }
+  .card__media, .wrow__media img, .prof__item { transition-duration: 0.01s !important; }
+}

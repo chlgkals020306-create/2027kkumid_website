@@ -154,19 +154,17 @@
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
       menu.inert = !open;
-      // home: the bar may have to move to its regular inset (js/timeline.js) — let the button glide there
-      const glide = () => { toggle.classList.add('is-shifting'); setTimeout(() => toggle.classList.remove('is-shifting'), 650); };
       if (open) {
         toggle.style.color = 'rgb(15,7,2)';
         if (logo) logo.style.backgroundColor = 'rgb(255,97,10)';
-        if (RT.timeline && RT.timeline.refresh && !instant) { glide(); RT.timeline.refresh(); }
+        if (RT.timeline && RT.timeline.refresh && !instant) RT.timeline.refresh();
         if (!raf) raf = requestAnimationFrame(loop);
       } else {
         ty = 0;
         const restore = () => {
           if (open) return;
           toggle.style.color = '';
-          if (RT.timeline && RT.timeline.refresh) { if (!instant) glide(); RT.timeline.refresh(); }
+          if (RT.timeline && RT.timeline.refresh) RT.timeline.refresh();
         };
         if (instant || reduced.matches) restore(); else setTimeout(restore, 420);   // the sheet is still sliding down
       }
