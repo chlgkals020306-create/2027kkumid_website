@@ -21,9 +21,21 @@ RT.data = {
                 loop: true, hold: 1.6, fade: 1.0, gap: 0.4 }       // seconds: finished logo rests → fades out → pause → plays again
   },
 
+  /* Name of the site = the title of the browser tab (the same text is in the <title> of every .html file).
+     Profile, work and subject pages put their own name in front of it. */
+  siteName: 'Rare Taste | 제36회 건국대학교 글로컬캠퍼스 시각영상디자인학과 영상/디지털 트랙 졸업전시회',
+
   /* Fork cursor (every page, mouse only). Angles in degrees, clockwise; the tips of the tines are the hot spot.
      rest = normal state, press = while the mouse button is down (the fork also shrinks to `pressScale`). */
-  cursor: { image: 'assets/img/cursor-fork.webp', height: 108, rest: -30, press: -60, pressScale: 0.95 },
+  cursor: {
+    image: 'assets/img/cursor-fork.webp', height: 108, rest: -30, press: -60, pressScale: 0.95,
+    /* The resting fork is handed to the system as a real mouse cursor, so it moves exactly like the normal pointer
+       (no delay). These two pictures are the fork drawn at `height` / `rest` (made with tools/cursor_png.py):
+       hot = the tips of the tines inside the picture, size = the picture in CSS px (must stay under 128).
+       If height or rest change, the pictures have to be made again — or set `native: null` to draw the fork
+       with the page only (it then trails the hand by a frame or two). */
+    native: { image: 'assets/img/cursor-fork-rest.png', image2x: 'assets/img/cursor-fork-rest-2x.png', hot: [5, 5], size: [66, 101] }
+  },
 
   main: { image: 'assets/img/table.webp' },
 

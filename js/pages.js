@@ -87,7 +87,7 @@
   };
   function designer() {
     const d = S.get.designer(S.param('id')) || S.designers[0];
-    document.title = `${d.name} — Rare Taste`;
+    document.title = `${d.name} | ${RT.data.siteName}`;
     const stage = $('[data-dz-stage]'), track = $('[data-dz-track]');
     const works = S.get.worksOf(d.id);
     let i = 0;
@@ -217,7 +217,7 @@
   function work() {
     const w = S.get.work(S.param('id')) || S.works[0];
     const team = S.get.designersOf(w);
-    document.title = `${w.title} — ${team.map((d) => d.name).join(', ')} — Rare Taste`;
+    document.title = `${w.title} — ${team.map((d) => d.name).join(', ')} | ${RT.data.siteName}`;
     /* head: one row per designer — name (link to the profile) · contact */
     const head = $('.work-head');
     head.innerHTML = '';
@@ -325,7 +325,7 @@
   }
   function group() {
     const g = S.get.group(S.param('g')) || S.get.group('smartphone') || S.groups[0];
-    document.title = `${g.ko} — Rare Taste`;
+    document.title = `${g.ko} | ${RT.data.siteName}`;
     head({ title: g.en });
     $('[data-title]').setAttribute('aria-label', `${g.en.join(' ')} — ${g.ko}`);
     const grid = $('[data-grid]');

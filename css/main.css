@@ -461,11 +461,15 @@ body.is-leaving { pointer-events: none; }
   .menu__sheet, .menu__item .line { transition-duration: 0.01s !important; transition-delay: 0s !important; }
 }
 
-/* Fork cursor (chrome.js › initFork). The wrapper sits on the pointer; the fork hangs from the tips of its tines,
-   so those stay on the pointer while it swings. Mouse only — the class is set once the image has loaded. */
+/* Fork cursor (chrome.js › initFork). At rest the fork is a real system cursor (html.fork-native — the script puts
+   the cursor image into --fork-cursor). While clicking and near the window edges the page draws it instead
+   (html.has-fork): the wrapper sits on the pointer and the fork hangs from the tips of its tines, so those stay
+   on the pointer while it swings. Mouse only — the classes are set once the pictures have loaded. */
 html.has-fork, html.has-fork * { cursor: none !important; }
-.fork { position: fixed; left: 0; top: 0; z-index: 2147483000; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 0.18s ease; will-change: transform; }
-.fork.is-on { opacity: 1; }
+html.fork-native, html.fork-native * { cursor: var(--fork-cursor, auto) !important; }
+/* shown / hidden at once (no fade): when the system cursor takes over again, a fading copy would linger behind it */
+.fork { position: fixed; left: 0; top: 0; z-index: 2147483000; width: 0; height: 0; pointer-events: none; visibility: hidden; will-change: transform; }
+.fork.is-on { visibility: visible; }
 .fork__img {
   position: absolute; left: 0; top: 0; height: var(--fork-h, 64px); width: auto; max-width: none;
   transform-origin: 50% 0; transform: translate(-50%, 0) rotate(var(--fork-rest, -30deg));

@@ -269,8 +269,14 @@
   }
 
   /* Fork cursor — replaces the mouse pointer on every page (RT.data.cursor). The tips of the tines are the hot spot.
-     Rest: turned by `rest`; while the button is down: turned to `press` and a touch smaller, then it springs back.
-     The last position is remembered across page changes so the fork is there before the mouse moves again. */
+
+     Two ways of drawing it, switched automatically:
+       native  the resting fork is a real system cursor (CSS cursor image) → it moves exactly like the normal pointer.
+       drawn   a picture moved by the page. Needed where the system cannot do it:
+               · while the button is down (the fork turns to `press`, shrinks a touch and springs back), and
+               · near the window edges — browsers swap a large cursor image for the plain arrow as soon as it would
+                 reach outside the page, so there the page draws the fork itself.
+     Without `cursor.native` (or if its picture fails to load) the fork is always drawn by the page. */
   function initFork() {
     const c = RT.data && RT.data.cursor, fine = window.matchMedia('(hover: hover) and (pointer: fine)');
     if (!c || !fine.matches) return;
@@ -281,32 +287,71 @@
     root.style.setProperty('--fork-rest', c.rest + 'deg');
     root.style.setProperty('--fork-press', c.press + 'deg');
     root.style.setProperty('--fork-scale', c.pressScale);
-    const KEY = 'rt:pointer', MIN = 150;                             // a quick click still shows the whole dip
-    let x = 0, y = 0, known = false, downAt = 0, timer = 0;
+    const KEY = 'rt:pointer', MIN = 150, BACK = 380;                 // a quick click still shows the whole dip · time to spring back
+    const N = c.native && c.native.size[0] <= 128 && c.native.size[1] <= 128 ? c.native : null;
+    let x = 0, y = 0, known = false, ready = false, native = false, busy = false, downAt = 0, timer = 0, mode = '';
     const place = () => { node.style.transform = `translate3d(${x}px,${y}px,0)`; };
-    const show = () => { if (known) node.classList.add('is-on'); };
-    const hide = () => node.classList.remove('is-on');
+    /* would the cursor picture reach past the page? (2px spare) */
+    const edge = () => known && (x - N.hot[0] < 2 || y - N.hot[1] < 2 ||
+      x - N.hot[0] + N.size[0] > window.innerWidth - 2 || y - N.hot[1] + N.size[1] > window.innerHeight - 2);
+    function sync() {
+      if (!ready) return;
+      const next = native && !busy && !edge() ? 'native' : 'drawn';
+      if (next !== mode) {
+        mode = next;
+        root.classList.toggle('fork-native', mode === 'native');
+        root.classList.toggle('has-fork', mode === 'drawn');
+      }
+      node.classList.toggle('is-on', mode === 'drawn' && known && inside);
+    }
+    let inside = true;
     img.addEventListener('load', () => {                              // the system pointer is only hidden once the fork can be drawn
-      node.appendChild(img); document.body.appendChild(node); root.classList.add('has-fork');
-      try { const s = JSON.parse(sessionStorage.getItem(KEY) || 'null'); if (s) { x = s[0]; y = s[1]; known = true; place(); show(); } } catch (e) { /* private mode */ }
+      node.appendChild(img); document.body.appendChild(node); ready = true;
+      try { const s = JSON.parse(sessionStorage.getItem(KEY) || 'null'); if (s) { x = s[0]; y = s[1]; known = true; place(); } } catch (e) { /* private mode */ }
+      sync();
     });
     img.src = c.image;
+    if (N) {                                                          // the system-drawn fork: 1x picture, 2x where the browser can pick
+      const probe = new Image();
+      probe.addEventListener('load', () => {
+        const abs = (u) => new URL(u, document.baseURI).href;       // absolute: a url() inside a custom property has no reliable base
+        const hot = `${N.hot[0]} ${N.hot[1]}, auto`, one = `url("${abs(N.image)}")`;
+        const set = `${one} 1x, url("${abs(N.image2x || N.image)}") 2x`;
+        const can = (v) => !!(window.CSS && CSS.supports && CSS.supports('cursor', v));
+        const value = [`image-set(${set}) ${hot}`, `-webkit-image-set(${set}) ${hot}`].find(can) || `${one} ${hot}`;
+        root.style.setProperty('--fork-cursor', value);              // used by html.fork-native in main.css
+        native = true; sync();
+      });
+      probe.src = N.image;
+      if (N.image2x) new Image().src = N.image2x;
+    }
     window.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'touch') return;
-      x = e.clientX; y = e.clientY; known = true; place(); show();
+      x = e.clientX; y = e.clientY; known = true; inside = true;
+      if (mode !== 'native') place();
+      sync();
     }, { passive: true });
     window.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'touch') { hide(); return; }
-      x = e.clientX; y = e.clientY; known = true; place(); show();
-      clearTimeout(timer); downAt = performance.now(); node.classList.add('is-down');
+      if (e.pointerType === 'touch') { inside = false; sync(); return; }
+      x = e.clientX; y = e.clientY; known = true; inside = true; busy = true; place(); sync();
+      clearTimeout(timer); downAt = performance.now();
+      node.getBoundingClientRect();                                   // the fork is in place in its resting pose before it starts to turn
+      node.classList.add('is-down');
     }, { passive: true });
-    const up = () => { clearTimeout(timer); timer = setTimeout(() => node.classList.remove('is-down'), Math.max(0, MIN - (performance.now() - downAt))); };
+    const up = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        node.classList.remove('is-down');
+        timer = setTimeout(() => { busy = false; place(); sync(); }, BACK);   // sprung back → hand it over to the system again
+      }, Math.max(0, MIN - (performance.now() - downAt)));
+    };
     window.addEventListener('pointerup', up, { passive: true });
     window.addEventListener('pointercancel', up, { passive: true });
     window.addEventListener('dragend', up, { passive: true });
-    root.addEventListener('mouseleave', hide);
-    root.addEventListener('mouseenter', show);
-    window.addEventListener('blur', () => node.classList.remove('is-down'));
+    root.addEventListener('mouseleave', () => { inside = false; sync(); });
+    root.addEventListener('mouseenter', () => { inside = true; sync(); });
+    window.addEventListener('resize', sync);
+    window.addEventListener('blur', () => { node.classList.remove('is-down'); busy = false; sync(); });
     window.addEventListener('pagehide', () => { if (known) { try { sessionStorage.setItem(KEY, JSON.stringify([x, y])); } catch (e) { /* private mode */ } } });
   }
 
