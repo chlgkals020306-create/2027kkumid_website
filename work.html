@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work — Rare Taste</title>
+<meta name="description" content="Rare Taste — 건국대학교 글로컬캠퍼스 시각영상디자인학과 영상/디지털트랙 졸업전시회">
+<meta name="theme-color" content="#fbfbfb">
+
+<!-- Fonts: same set as index.html (Caesura via Adobe Fonts, Pretendard, Noto Sans KR as fallback) -->
+<link rel="stylesheet" href="https://use.typekit.net/sut8xhy.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body class="page work" data-page="work">
+
+<!-- ───────────── NAVIGATION (fixed) · Figma "navigation" 95px ───────────── -->
+<header class="nav nav--sub" data-nav>
+  <a class="nav__logo is-ready" href="index.html" aria-label="Rare Taste — 처음으로" data-nav-logo></a>
+  <button class="nav__menu" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu" data-menu-toggle>
+    <span></span><span></span>
+  </button>
+</header>
+<!-- Menu overlay (Figma "menu"): built by js/chrome.js from RT.data.menu -->
+<nav class="menu" id="menu" aria-label="사이트 메뉴" data-menu hidden></nav>
+
+<main>
+  <!-- Figma "works_detail": designer name · contact · images stacked edge to edge (js/pages.js › work, #id) -->
+  <header class="work-head">
+    <h1 class="work-head__name" data-name></h1>
+    <dl class="work-head__contact" data-contact data-rv="lines" data-rv-delay="0.1"></dl>
+  </header>
+  <div class="work-media" data-media></div>
+</main>
+
+<footer class="footer" data-footer></footer>
+
+<script src="js/data.js"></script>
+<script src="js/data-works.js"></script>
+<script src="js/data-site.js"></script>
+<script src="js/chrome.js"></script>
+<script src="js/pages.js"></script>
+</body>
+</html>

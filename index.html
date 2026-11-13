@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rare Taste — Graduation Exhibition</title>
+<meta name="description" content="Rare Taste — 건국대학교 글로컬캠퍼스 시각영상디자인학과 영상/디지털트랙 졸업전시회">
+<meta name="theme-color" content="#fbfbfb">
+
+<!-- Fonts
+     Titles : Caesura Bold — Adobe Fonts web kit. If the kit cannot load, js/render.js draws the
+              titles from Figma-exported Caesura masks instead (see RT.data.titleArt).
+     Body   : Pretendard. Noto Sans KR is only a fallback for environments that block the CDN. -->
+<link rel="stylesheet" href="https://use.typekit.net/sut8xhy.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+
+<link rel="preload" as="image" href="assets/img/table.webp">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body data-page="home">
+
+<!-- ───────────── NAVIGATION (fixed) ───────────── -->
+<header class="nav" data-nav>
+  <!-- Fades in while the intro logo fades out (js/timeline.js › navLogoIn) -->
+  <a class="nav__logo" href="#top" aria-label="Rare Taste — 처음으로" data-nav-logo></a>
+  <button class="nav__menu" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="menu" data-menu-toggle>
+    <span></span><span></span>
+  </button>
+</header>
+
+<!-- Menu overlay (Figma "menu"): built by js/chrome.js from RT.data.menu -->
+<nav class="menu" id="menu" aria-label="사이트 메뉴" data-menu hidden></nav>
+
+<main id="top">
+  <!-- ───────────── PINNED STAGE : scenes 01–07 ───────────── -->
+  <div class="track" data-track>
+    <div class="stage" data-stage>
+
+      <!-- SCENE 03 — CONCEPT 01 -->
+      <section class="scene concept1" data-scene="concept1" aria-label="Concept 01">
+        <div class="concept1__head">
+          <h2 class="t-display lines" data-art data-lines="concept1.title" data-group="concept1"></h2>
+          <p class="t-body-lg lines" data-lines="concept1.body" data-group="concept1"></p>
+        </div>
+        <div class="concept1__media" data-c1-media><img data-src="concept1.image" alt="" decoding="async"></div>
+      </section>
+
+      <!-- SCENE 04 — CONCEPT 02 -->
+      <section class="scene concept2" data-scene="concept2" aria-label="Concept 02">
+        <div class="concept2__text">
+          <h2 class="t-display lines" data-art data-lines="concept2.title" data-group="concept2"></h2>
+          <p class="t-body-lg lines" data-lines="concept2.body" data-group="concept2"></p>
+        </div>
+        <div class="concept2__media" data-c2-media><img data-src="concept2.image" alt="" decoding="async"></div>
+      </section>
+
+      <!-- SCENE 05 — CONCEPT 03 -->
+      <section class="scene concept3" data-scene="concept3" aria-label="Concept 03">
+        <img class="concept3__bg" data-src="concept3.image" alt="" decoding="async">
+        <div class="concept3__text">
+          <h2 class="t-hero lines" data-art data-lines="concept3.title" data-group="concept3"></h2>
+          <p class="t-body t-strong lines" data-lines="concept3.body" data-group="concept3"></p>
+          <p class="t-slogan lines" data-lines="concept3.slogan" data-group="concept3"></p>
+        </div>
+      </section>
+
+      <!-- SCENE 06–07 — VIDEO 01 / 02 (white sheet expands, then the film fills the viewport) -->
+      <section class="scene film" data-scene="film" aria-label="Main Film">
+        <div class="film__clip" data-film-clip>
+        <div class="film__sheet" data-film-sheet>
+          <div class="film__head">
+            <h2 class="t-title lines" data-art data-lines="film.title" data-group="film"></h2>
+            <p class="t-caption lines" data-lines="film.body" data-group="film"></p>
+          </div>
+          <div class="film__slot" data-film-slot aria-hidden="true"></div>
+        </div>
+        <div class="film__player" data-film-player>
+          <video data-film-video muted playsinline loop preload="auto"></video>
+          <span class="film__badge" data-film-badge hidden>PLACEHOLDER FILM — 교체 예정</span>
+        </div>
+        </div>
+        <div class="film__shade" data-film-shade></div>
+        <div class="scroll-ind scroll-ind--film lines" data-group="filmHint">
+          <span class="scroll-ind__line line"></span>
+          <span class="scroll-ind__label line" data-text="ui.scroll"></span>
+        </div>
+      </section>
+
+      <!-- SCENE 02 — MAIN (table) · also the continuous background of the intro -->
+      <section class="scene main" data-scene="main" aria-label="Main">
+        <div class="main__pan" data-pan>
+          <img class="main__photo" data-src="main.image" alt="잔디 위에 차려진 Rare Taste 코스 테이블" decoding="async">
+          <div class="main__dim" data-dim></div>
+          <div class="main__dishes" data-dishes></div>
+        </div>
+        <p class="main__hint lines" data-group="mainHint"><span class="line" data-main-hint></span></p>
+      </section>
+
+      <!-- SCENE 01 — INTRO -->
+      <section class="scene intro" data-scene="intro" aria-label="Intro">
+        <!-- Logo: written on, frame by frame, when the page opens (js/logo.js, frames in assets/img/logo-anim) -->
+        <h1 class="intro__logo" data-intro-logo aria-label="Rare Taste">
+          <canvas data-logo-canvas aria-hidden="true"></canvas>
+        </h1>
+        <div class="scroll-ind scroll-ind--intro lines" data-group="introHint">
+          <span class="scroll-ind__line line"></span>
+          <span class="scroll-ind__label line" data-text="ui.scroll"></span>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ───────────── SCENE 08 — DETAILS (rises over the film) ───────────── -->
+  <section class="details" id="offline" data-details aria-label="Offline">
+    <!-- The OFFLINE panel sticks to the top once it has risen; .details__hold = how long it stays (css/main.css) -->
+    <div class="details__pin" data-pin>
+      <div class="details__panel">
+        <div class="details__block">
+          <header class="details__head reveal" data-reveal>
+            <h2 class="t-title lines" data-art data-lines="offline.title"></h2>
+            <p class="t-caption lines" data-lines="offline.body"></p>
+          </header>
+          <div class="accordion" data-accordion></div>
+        </div>
+      </div>
+      <div class="details__hold" aria-hidden="true"></div>
+    </div>
+
+    <div class="details__block details__block--partners" id="partners">
+      <header class="details__head reveal" data-reveal>
+        <h2 class="t-title lines" data-art data-lines="partners.title"></h2>
+        <p class="t-caption lines" data-lines="partners.body"></p>
+      </header>
+      <div class="marquee reveal" data-marquee data-reveal aria-label="후원 및 협력사"></div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer__top">
+        <img class="footer__logo" data-src="footer.logo" alt="Rare Taste" loading="lazy">
+        <p class="footer__org" data-footer-org></p>
+      </div>
+      <p class="footer__copy" data-text="footer.copyright"></p>
+    </footer>
+  </section>
+</main>
+
+<!-- Dish hover UI (pointer-events: none — never blocks clicks) -->
+<aside class="dish-card" data-dish-card aria-live="polite">
+  <div class="dish-card__inner">
+    <div class="dish-card__media"><img data-dish-card-img alt=""></div>
+    <p class="dish-card__title" data-dish-card-title></p>
+    <p class="dish-card__meta" data-dish-card-meta></p>
+  </div>
+</aside>
+
+<script src="js/data.js"></script>
+<script src="js/chrome.js"></script>
+<script src="js/render.js"></script>
+<script src="js/logo.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/dishes.js"></script>
+<script src="js/details.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

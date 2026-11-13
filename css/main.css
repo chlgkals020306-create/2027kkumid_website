@@ -1,0 +1,476 @@
+/* ==========================================================================
+   Rare Taste — Graduation Exhibition
+   1. Tokens   2. Base & type   3. Lines & title lettering   4. Navigation & menu
+   5. Stage & scenes 01–07   6. Dish hover UI   7. Details (scene 08)
+   8. Responsive   9. Reduced motion
+   Sub pages (introduce, works, designers …) continue in css/pages.css
+   Design reference: Figma "졸준위 웹사이트" › page "웹사이트" (1293 × 850 frames)
+   ========================================================================== */
+
+/* 1. Tokens ---------------------------------------------------------------- */
+:root {
+  --white: #fbfbfb;
+  --ink: #0f0702;
+  --orange: #ff610a;
+  --footer: #f5f5f5;
+  --rule: rgba(15, 7, 2, 0.18);
+
+  --font-display: "caesura", "Caesura", "Times New Roman", serif;
+  --font-body: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* SCALE — the site is the 1293 × 850 Figma frame fitted into the window.
+     --px = one Figma pixel on screen: the frame scaled to fit both the width and the height of the
+     viewport ("contain"), so on a wide window nothing gets larger than it is in the design.
+     Every size is written as "Figma px × --px"; the px value in front of a max() is only the floor
+     for phones (--fl turns the floors down on desktop layouts so the proportion stays exact). */
+  --px: min(100vw / 1293, 100vh / 850);
+  --fl: 0.6;
+  --sp: max(calc(0.78px * var(--fl)), var(--px));          /* same unit, for spacing */
+  /* Side margin: 40 Figma px from the window edge — on every page, exactly like the home scenes.
+     The navigation, titles, grids and footers all hang on this one value. */
+  --gutter: max(calc(20px * var(--fl)), calc(40 * var(--px)));
+  --nk: 1;                           /* navigation scale = --px (set by js/chrome.js; 1 on phones) */
+  --screens: 11.4;                   /* track length in viewport heights (timeline end + 1) */
+
+  /* One easing family for the whole site */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* 2. Base & type ----------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }   /* the window scrollbar is hidden on every page */
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: max(calc(14px * var(--fl)), calc(16 * var(--px)));
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+h1, h2, p, ul, dl, dd { margin: 0; padding: 0; }
+ul { list-style: none; }
+img, video { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+a { color: inherit; text-decoration: none; }
+[hidden] { display: none !important; }
+
+.t-display, .t-hero, .t-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.t-display { font-size: max(calc(38px * var(--fl)), calc(66.8 * var(--px))); line-height: 0.973; --lh: 0.973em; letter-spacing: -0.0374em; color: var(--orange); }   /* 66.8 / 65 */
+.concept2 .t-display { font-size: max(calc(38px * var(--fl)), calc(64 * var(--px))); line-height: 1.016; --lh: 1.016em; letter-spacing: -0.039em; }                /* 64 / 65 */
+.t-hero    { font-size: max(calc(56px * var(--fl)), calc(95.9 * var(--px))); line-height: 0.948; --lh: 0.948em; letter-spacing: -0.034em; color: #fff; }               /* 96 / 91 */
+.t-title   { font-size: max(calc(38px * var(--fl)), calc(56 * var(--px))); line-height: 1.16; --lh: 1.16em; letter-spacing: -0.058em; color: var(--orange); }        /* 56 / 65 */
+.t-body-lg { font-weight: 500; font-size: max(calc(15px * var(--fl)), calc(20 * var(--px))); line-height: 1.65; letter-spacing: -0.05em; }
+.t-body    { font-weight: 500; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.6875; letter-spacing: -0.0625em; }
+.t-strong  { font-weight: 600; }
+.t-slogan  { font-weight: 600; font-size: max(calc(20px * var(--fl)), calc(24 * var(--px))); line-height: 1.125; letter-spacing: -0.042em; }
+.t-caption { font-weight: 400; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.5; color: rgba(15, 7, 2, 0.8); }
+
+/* 3. Lines & title lettering --------------------------------------------------
+   Lines are positioned by scroll (js/timeline.js › drawGroup, js/details.js › initReveal):
+   each one rises a little and fades in, one after another. No CSS transition here on purpose —
+   the motion is tied to the scroll position, so it also runs backwards. */
+.line { display: block; }
+[data-group] .line, [data-reveal] .line { opacity: 0; will-change: transform, opacity; }
+[data-reveal]:not(.details__head) { opacity: 0; will-change: transform, opacity; }
+
+/* Title lettering fallback: Caesura drawn from a Figma mask when the web font is unavailable. */
+.tl--art {
+  display: block;
+  height: var(--cap, 0.74em);
+  width: calc(var(--cap, 0.74em) * var(--ar));
+  margin-block: calc((var(--lh, 1em) - var(--cap, 0.74em)) / 2);
+  background: currentColor;
+  transition: inherit;
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  font-size: inherit; color: inherit;
+  text-indent: -200vw; overflow: hidden; white-space: nowrap;     /* text stays for assistive tech and copy */
+}
+.tl--drop { height: calc(var(--cap, 0.74em) * (1 + var(--drop))); margin-bottom: calc((var(--lh, 1em) - var(--cap, 0.74em)) / 2 - var(--cap, 0.74em) * var(--drop)); }
+.concept3 .tl--art { margin-inline: auto; }
+.no-caesura .line, .no-caesura .menu__word { display: flow-root; }   /* keep the mask's margins inside its line: same line pitch as live text */
+.no-caesura { --font-display: var(--font-body); }                 /* numerals / menu: neutral sans, never a wrong serif */
+
+/* 4. Navigation & menu -----------------------------------------------------
+   One navigation for every page and for the menu overlay — the metrics of the Figma home frames:
+   69px bar, logo 47 × 27 at x 40 / y 21, menu lines 28.5 wide at y 32.
+   The side inset is always the page gutter, so both line up with the content edges.
+   --nk (set by js/chrome.js) scales the bar with the viewport like the rest of the layout. */
+.nav { position: fixed; inset: 0 0 auto 0; height: calc(69px * var(--nk)); z-index: 50; pointer-events: none; }
+.nav__logo {
+  /* home: sits in the navigation from the start and fades in while the intro logo fades out
+     (js/timeline.js sets opacity and the side inset) */
+  position: fixed; left: 0; top: calc(21px * var(--nk));
+  width: calc(47px * var(--nk)); height: calc(27px * var(--nk));
+  background-color: var(--orange);
+  -webkit-mask: url("../assets/img/logo-r.png") center / 100% 100% no-repeat;
+          mask: url("../assets/img/logo-r.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+body.menu-open .nav__logo { opacity: 1 !important; pointer-events: auto !important; transition: opacity 0.35s ease 0.25s; }
+.nav--sub .nav__logo {                    /* sub pages: same size and place as on the home page, always visible */
+  position: absolute; left: var(--gutter);
+  opacity: 1; will-change: auto; pointer-events: auto;
+}
+.nav__menu {
+  /* 44px hit area centred on the two lines; the lines end exactly at the gutter */
+  position: absolute; top: calc(34.75px * var(--nk) - 22px);
+  right: calc(var(--gutter) - (44px - 28.5px * var(--nk)) / 2);
+  width: 44px; height: 44px;
+  display: grid; place-content: center; gap: calc(4.5px * var(--nk));
+  color: #fff; cursor: pointer; pointer-events: auto;
+}
+.nav--sub .nav__menu { color: var(--ink); }
+.nav__menu.is-shifting { transition: transform 0.55s var(--ease-out); }   /* only while the menu opens / closes on the home page */
+.nav__menu span {
+  display: block; width: calc(28.5px * var(--nk)); height: 1px; background: currentColor;
+  transition: transform 0.35s var(--ease-out);
+}
+/* open: the two lines cross into the close mark of the Figma menu (20 × 20, same centre) */
+.nav__menu[aria-expanded="true"] span:first-child { transform: translateY(calc(2.75px * var(--nk))) rotate(45deg); }
+.nav__menu[aria-expanded="true"] span:last-child  { transform: translateY(calc(-2.75px * var(--nk))) rotate(-45deg); }
+.nav__menu:focus-visible, .nav__logo:focus-visible, .menu a:focus-visible, .acc-head:focus-visible {
+  outline: 2px solid var(--orange); outline-offset: 4px;
+}
+
+/* Menu overlay (Figma "menu"): a white sheet rises from the bottom edge, then the items fade in
+   line by line. Items are 15% ink and turn orange on hover; the whole list drifts a little
+   toward the pointer (js/chrome.js). */
+.menu { position: fixed; inset: 0; z-index: 40; visibility: hidden; overflow: hidden; transition: visibility 0s linear 0.75s; }
+.menu.is-open { visibility: visible; transition-delay: 0s; }
+.menu__sheet {
+  position: absolute; inset: 0; background: var(--white);
+  transform: translate3d(0, 101%, 0);
+  transition: transform 0.6s var(--ease-in-out) 0.12s;
+  will-change: transform;
+}
+.menu.is-open .menu__sheet { transform: none; transition: transform 0.8s var(--ease-in-out); }
+.menu__list {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-top: calc(21 * var(--px));                 /* Figma: the three lines sit a touch below the middle (y 226 · 376 · 526) */
+  font-size: calc(92 * var(--px));
+  will-change: transform;
+}
+.menu__item { margin: 0.2065em 0; will-change: transform; }
+.menu__item .line {
+  opacity: 0; transform: translate3d(0, 0.45em, 0);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.menu.is-open .menu__item .line {
+  opacity: 1; transform: none;
+  transition: opacity 0.7s var(--ease-out) calc(0.5s + var(--i, 0) * 0.11s), transform 0.9s var(--ease-out) calc(0.5s + var(--i, 0) * 0.11s);
+}
+.menu__link {
+  position: relative; display: block;
+  color: rgba(15, 7, 3, 0.15);
+  transition: color 0.3s ease;
+}
+.menu__link[aria-disabled="true"] { cursor: default; }
+.menu__word {
+  display: block; white-space: nowrap;
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  line-height: 1.2176; --lh: 1.2176em; letter-spacing: -0.031em;
+}
+.menu__num {
+  position: absolute; top: 74.4%; transform: translateY(-50%);
+  font-family: var(--font-body); font-weight: 600; font-size: 0.3043em; line-height: 1; letter-spacing: -0.0714em;
+  font-variant-numeric: tabular-nums;
+}
+/* numbers sit left of the odd lines and right of the even ones — gaps as drawn in Figma (45 / 50 / 61 / 50 px at 92px) */
+.menu__item:nth-child(odd)  .menu__num { right: calc(100% + (var(--num-gap, 0.489em) + var(--art-pad, 0em)) / 0.3043); }
+.menu__item:nth-child(even) .menu__num { left:  calc(100% + (0.543em + var(--art-pad, 0em)) / 0.3043); }
+.menu__item:nth-child(3) { --num-gap: 0.663em; }
+.no-caesura .menu__link { --art-pad: 0.076em; }                        /* the masks are cropped to the glyphs, live text has side bearings */
+@media (hover: hover) and (pointer: fine) { .menu__link:hover { color: var(--orange); } }
+.menu__link:focus-visible, .menu__link:active { color: var(--orange); }
+body.is-leaving .menu__list { opacity: 0; transition: opacity 0.4s ease; }
+
+/* Page transition: the page that is being left fades to the white ground (js/chrome.js › RT.go) */
+main { transition: opacity 0.42s ease; }
+body.is-leaving main, body.is-leaving > .footer { opacity: 0; }
+body > .footer { transition: opacity 0.42s ease; }
+body.is-leaving { pointer-events: none; }
+
+/* 5. Stage & scenes -------------------------------------------------------- */
+.track { height: calc(var(--screens) * 100vh); height: calc(var(--screens) * 100svh); }
+.stage {
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;
+  overflow: hidden;
+  background: var(--white);
+}
+.scene { position: absolute; inset: 0; }
+.concept1 { z-index: 1; }
+.concept2 { z-index: 2; }
+.concept3 { z-index: 3; }
+.film     { z-index: 4; }
+.main     { z-index: 5; }
+.intro    { z-index: 6; pointer-events: none; }
+.scene[data-off] { visibility: hidden; }
+
+/* — Scene 01 · Intro — */
+.intro__logo {
+  position: absolute; left: 50%; top: 21%;
+  width: max(calc(230px * var(--fl)), calc(364.6 * var(--px)));
+  aspect-ratio: 660 / 458;                 /* the frame of the logo animation */
+  transform: translateX(-50%);
+}
+.intro__logo > * { display: block; width: 100%; height: 100%; }
+
+.scroll-ind {
+  position: absolute; left: 50%; bottom: clamp(24px, 4.7vh, 44px);
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: calc(5 * var(--sp));
+  color: #fff; font-weight: 500; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.43; letter-spacing: -0.023em;
+  white-space: nowrap; pointer-events: none;
+}
+.scroll-ind__line {
+  position: relative; width: 1px; height: calc(47 * var(--sp)); overflow: hidden;
+  background: rgba(255, 255, 255, 0.28);
+}
+.scroll-ind__line::after {
+  content: ""; position: absolute; inset: 0; background: #fff;
+  transform: translateY(-101%);
+  animation: scroll-drop 2.4s var(--ease-in-out) infinite;
+}
+@keyframes scroll-drop {
+  0%   { transform: translateY(-101%); }
+  50%  { transform: translateY(0); }
+  100% { transform: translateY(101%); }
+}
+
+/* — Scene 02 · Main — */
+.main { background: #17300f; will-change: transform; overflow: hidden; }   /* the photo never shows outside the moving scene */
+.main__pan { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1293 / 1586; will-change: transform; }
+.main__photo { width: 100%; height: 100%; }
+.main__dim { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity 0.35s ease; pointer-events: none; }
+.main.is-dimmed .main__dim { opacity: 0.6; }
+.dish-lit {
+  position: absolute; pointer-events: none;
+  background-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.dish-lit.is-on { opacity: 1; }
+.dish-hit { position: absolute; border-radius: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dish-hit:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.main__hint {
+  position: absolute; left: 0; right: 0; bottom: clamp(28px, 5.3vh, 48px);
+  text-align: center; color: #fff; pointer-events: none;
+  font-weight: 600; font-size: max(calc(16px * var(--fl)), calc(20 * var(--px))); line-height: 1.43; letter-spacing: -0.023em;
+  transition: opacity 0.4s ease;
+}
+
+.main__dishes { position: absolute; inset: 0; pointer-events: none; }
+/* numbered labels on the table (Figma "메인": 23.75px white squares, Caesura Bold 15.96px) — they belong to the photo,
+   so they are sized in photo pixels (--dp, set by timeline.js). Shown while the table is interactive, hidden behind a hover. */
+.dish-no {
+  position: absolute; display: grid; place-items: center;
+  width: calc(23.75 * var(--dp, 1px)); height: calc(23.75 * var(--dp, 1px)); border-radius: calc(1.14 * var(--dp, 1px));
+  background: #fff; color: var(--orange);
+  font-family: var(--font-display); font-weight: 700; font-size: calc(15.96 * var(--dp, 1px)); line-height: 1; letter-spacing: -0.023em;
+  font-variant-numeric: lining-nums;
+  opacity: 0; transform: translate3d(0, 35%, 0) scale(0.8);
+  transition: opacity 0.3s ease, transform 0.5s var(--ease-out);
+}
+.main.is-live .dish-no { opacity: 1; transform: none; transition-delay: calc(var(--i) * 55ms + 120ms); }
+.main.is-live.is-dimmed .dish-no { opacity: 0; transition-delay: 0s; }
+.main.is-live .dish-hit { pointer-events: auto; }
+
+/* — Scene 03 · Concept 01 — */
+.concept1 { display: flex; flex-direction: column; padding-top: clamp(92px, 15.53vh, 170px); }
+.concept1__head {
+  display: grid; grid-template-columns: 47.7% minmax(0, 1fr);
+  align-items: start;
+  padding: 0 var(--gutter);
+}
+.concept1__head .t-body-lg { padding-top: calc(34 * var(--px)); }
+@media (min-width: 1000px) { .concept1__head .t-body-lg .line { white-space: nowrap; } }
+.concept1__media { flex: 1; min-height: 0; margin-top: clamp(28px, 5.4vh, 60px); overflow: hidden; will-change: transform; transform: translate3d(0, 105%, 0); }
+.concept1__media img, .concept2__media img, .concept3__bg { width: 100%; height: 100%; object-fit: cover; }
+
+/* — Scene 04 · Concept 02 — */
+.concept2__media { position: absolute; top: 0; bottom: 0; right: 0; left: 41.2%; overflow: hidden; will-change: transform; transform: translate3d(100%, 0, 0); }
+.concept2__text {
+  position: absolute; left: var(--gutter); top: clamp(84px, 11.5vh, 130px); bottom: clamp(32px, 5.9vh, 64px);
+  width: calc(41.2% - var(--gutter) * 2);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 24px;
+}
+
+/* — Scene 05 · Concept 03 — */
+.concept3 { opacity: 0; will-change: opacity; background: var(--orange); }
+.concept3__bg { position: absolute; inset: 0; }
+.concept3__text {
+  position: absolute; inset: 0; padding: 80px var(--gutter) 40px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; color: #fff;
+}
+.concept3__text .t-hero { margin-bottom: clamp(40px, 10.3vh, 100px); }
+.concept3__text .t-body { margin-bottom: clamp(14px, 2.6vh, 26px); }
+
+/* — Scene 06–07 · Film — */
+.film__clip { position: absolute; inset: 0; clip-path: inset(100% 50% 0 50%); }
+.film__sheet { position: absolute; inset: 0; background: var(--white); padding: clamp(84px, 11.5vh, 130px) var(--gutter) 0; }
+.film__head .t-caption { margin-top: 5px; }
+.film__slot { margin-top: clamp(16px, 2.7vh, 28px); width: 100%; aspect-ratio: 16 / 9; }
+.film__player {
+  position: absolute; left: 0; top: 0; overflow: hidden;
+  background: #686868;
+  transform-origin: 0 0; will-change: transform, opacity; opacity: 0;
+}
+.film__player video { width: 100%; height: 100%; object-fit: cover; }
+.film__badge {
+  position: absolute; left: 50%; top: 18px; transform: translateX(-50%); padding: 5px 9px; white-space: nowrap;
+  font-size: max(calc(10px * var(--fl)), calc(12 * var(--px))); font-weight: 600; letter-spacing: 0.04em; color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+}
+.film__shade {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 21.3vh; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.61) 75%);
+  opacity: 0;
+}
+
+/* 6. Dish hover UI --------------------------------------------------------- */
+.dish-card { position: fixed; left: 0; top: 0; z-index: 59; width: max(calc(148px * var(--fl)), calc(201.1 * var(--px))); pointer-events: none; will-change: transform; }
+.dish-card__inner {
+  color: #fff; opacity: 0; transform: scale(0.96); transform-origin: 0 100%;
+  transition: opacity 0.16s var(--ease-out), transform 0.16s var(--ease-out);
+}
+.dish-card.is-on .dish-card__inner { opacity: 1; transform: none; transition-duration: 0.24s; }
+.dish-card__media { aspect-ratio: 201 / 202; background: #d9d9d9; overflow: hidden; }
+.dish-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.dish-card__title { margin-top: calc(9 * var(--sp)); font-weight: 600; font-size: max(calc(16px * var(--fl)), calc(20 * var(--px))); line-height: 1.5; letter-spacing: -0.05em; white-space: nowrap; }
+.dish-card__meta { font-weight: 400; font-size: max(calc(13px * var(--fl)), calc(16 * var(--px))); line-height: 1.5; opacity: 0.8; white-space: nowrap; }
+
+/* 7. Details (scene 08) ---------------------------------------------------- */
+.details { position: relative; z-index: 10; margin-top: -100vh; margin-top: -100svh; background: var(--white); }
+/* Sticky OFFLINE panel: after the sheet has risen over the film it sticks to the top of the viewport
+   and stays for the height of .details__hold; PARTNERS comes up underneath meanwhile and takes over
+   when the hold ends. A longer hold = the panel stays longer. */
+.details__panel { position: sticky; top: 0; background: var(--white); }
+.details__hold { height: 60vh; height: 60svh; }
+.details__pin .acc-item { opacity: 0; will-change: transform, opacity; }
+.details__block { padding: max(calc(92px * var(--fl)), calc(113.8 * var(--px))) var(--gutter) 0; }
+.details__block--partners { padding-top: max(calc(90px * var(--fl)), calc(170.4 * var(--px))); }
+.details__head .t-caption { margin-top: 5px; }
+
+.accordion { width: 59.35%; margin: max(calc(40px * var(--fl)), calc(82.8 * var(--px))) 0 0 auto; }
+.acc-item { border-top: 1px solid var(--rule); }
+.acc-item:last-child { border-bottom: 1px solid var(--rule); }
+.acc-head {
+  display: grid; grid-template-columns: 31.4% minmax(0, 1fr) calc(22 * var(--sp)); align-items: start;
+  width: 100%; padding: calc(20 * var(--sp)) calc(25 * var(--sp)) calc(19 * var(--sp)) 0; text-align: left; cursor: pointer;
+}
+.acc-head__num { font-weight: 600; font-size: max(calc(17px * var(--fl)), calc(20 * var(--px))); line-height: 1.42; letter-spacing: -0.03em; }
+.acc-head__title { display: block; font-family: var(--font-display); font-weight: 700; font-size: max(calc(17px * var(--fl)), calc(20 * var(--px))); line-height: 1.32; letter-spacing: -0.02em; }
+.acc-head__title { --lh: 1.32em; }
+.acc-head__title .tl--art { --cap: 0.75em; }
+.acc-head__sub { display: block; margin-top: 3px; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.32; letter-spacing: -0.03em; opacity: 0.6; }
+.acc-head__arrow { width: calc(22 * var(--sp)); height: calc(22 * var(--sp)); align-self: center; transition: transform 0.3s var(--ease-out); }
+.acc-item.is-open .acc-head__arrow { transform: rotate(180deg); }
+.acc-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.42s var(--ease-out); }
+.acc-item.is-open .acc-panel { grid-template-rows: 1fr; }
+.acc-panel__clip { min-height: 0; overflow: hidden; }
+.acc-panel__content {
+  padding: calc(31 * var(--sp)) 0 calc(54 * var(--sp)) 31.4%;
+  opacity: 0; transform: translate3d(0, 10px, 0);
+  transition: opacity 0.2s ease, transform 0.42s var(--ease-out);
+}
+.acc-item.is-open .acc-panel__content { opacity: 1; transform: none; transition: opacity 0.4s ease 0.08s, transform 0.5s var(--ease-out) 0.04s; }
+/* label column 123px, 16px text; rows 34px apart (Figma "세부사항_1") */
+.info { display: grid; row-gap: calc(11.6 * var(--sp)); }
+.info-row { display: grid; grid-template-columns: calc(123 * var(--sp)) minmax(0, 1fr); align-items: start; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.4; }
+.info-row__label { font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+.info-row__lines span { display: block; }
+.info-row__note { color: rgba(15, 7, 3, 0.4); }
+/* maps: drawn at their design size; --x = indent from the text column */
+.acc-map { width: calc(var(--w) * var(--sp)); max-width: calc(100% - var(--x) * var(--sp)); aspect-ratio: var(--ar); margin: calc((var(--t) - 9.5) * var(--sp)) 0 calc(var(--b) * var(--sp)) calc(var(--x) * var(--sp)); }
+.acc-map img { display: block; width: 100%; height: 100%; }
+.acc-map + .info { margin-top: calc(55.7 * var(--sp)); }
+.info + .acc-map { margin-top: calc(40 * var(--sp)); }
+.acc-text p + p { margin-top: 6px; }
+.acc-text { font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.6; letter-spacing: -0.02em; color: rgba(15, 7, 2, 0.7); }
+
+.marquee { margin: max(calc(48px * var(--fl)), calc(89.2 * var(--px))) calc(var(--gutter) * -1) 0; overflow: hidden; --k: max(calc(0.7px * var(--fl)), calc(1 * var(--px))); }
+.marquee__track { display: flex; width: max-content; animation: marquee var(--marquee-duration, 42s) linear infinite; will-change: transform; }
+.marquee__set { display: flex; align-items: center; gap: max(calc(40px * var(--fl)), calc(71.1 * var(--px))); padding-right: max(calc(40px * var(--fl)), calc(71.1 * var(--px))); height: calc(116 * var(--k)); flex: none; }
+.marquee__set:first-child { padding-left: 0; }
+.marquee__logo { height: calc(var(--h) * var(--k)); width: auto; max-width: none; flex: none; mix-blend-mode: multiply; }
+.marquee__ph {
+  display: grid; place-items: center; flex: none;
+  height: calc(var(--h) * var(--k)); width: calc(var(--w) * var(--k));
+  border: 1px dashed rgba(15, 7, 2, 0.35); color: rgba(15, 7, 2, 0.55);
+  font-size: max(calc(11px * var(--fl)), calc(11 * var(--px))); font-weight: 600; letter-spacing: 0.02em; text-align: center; line-height: 1.3;
+}
+@keyframes marquee { to { transform: translate3d(-50%, 0, 0); } }
+
+.details .footer { margin-top: max(calc(88px * var(--fl)), calc(151 * var(--px))); }
+.footer { margin-top: max(calc(84px * var(--fl)), calc(139 * var(--px))); padding: calc(54 * var(--sp)) var(--gutter) calc(88 * var(--sp)); background: var(--footer); }
+.footer__top { display: flex; align-items: flex-end; gap: calc(31 * var(--sp)); padding-bottom: calc(20 * var(--sp)); border-bottom: 1px solid rgba(15, 7, 3, 0.14); }
+.footer__logo { width: calc(91 * var(--sp)); height: auto; }
+.footer__org { font-weight: 600; font-size: max(calc(14px * var(--fl)), calc(16 * var(--px))); line-height: 1.375; letter-spacing: -0.0125em; color: rgba(15, 7, 3, 0.7); transform: translateY(calc(6 * var(--sp))); }
+.footer__org span { display: block; }
+.footer__copy { padding-top: calc(18 * var(--sp)); text-align: right; font-size: max(calc(12px * var(--fl)), calc(14 * var(--px))); line-height: 1.07; letter-spacing: -0.0143em; text-transform: uppercase; color: rgba(0, 0, 0, 0.2); }
+
+/* 8. Responsive (tablet portrait & narrow) ---------------------------------- */
+@media (max-width: 860px), (max-aspect-ratio: 1/1) {
+  :root { --fl: 1; }
+  .concept1__head { grid-template-columns: 1fr; row-gap: 20px; }
+  .concept1__head .t-body-lg { padding-top: 0; font-size: max(calc(15px * var(--fl)), calc(27.2 * var(--px))); }
+  .concept2__media { left: 0; top: 54%; }
+  .concept2__text { width: auto; right: var(--gutter); bottom: calc(46% + 28px); }
+  .t-body { font-size: max(calc(14px * var(--fl)), calc(25.9 * var(--px))); }
+  .t-caption { font-size: max(calc(14px * var(--fl)), calc(24.6 * var(--px))); }
+  .accordion { width: 100%; }
+  .acc-head { grid-template-columns: 18% minmax(0, 1fr) 22px; }
+  .acc-panel__content { padding-left: 18%; }
+  .info-row { grid-template-columns: max(88px, calc(123 * var(--sp))) minmax(0, 1fr); }
+  .footer__copy { text-align: left; }
+  .marquee { --k: 0.82px; }
+  .menu__list { font-size: min(12.4vw, 9.4vh); }
+}
+@media (max-width: 560px) {
+  .acc-head { grid-template-columns: 44px minmax(0, 1fr) 22px; padding-right: 4px; }
+  .acc-panel__content { padding: 28px 4px 44px 44px; }
+  .info-row { grid-template-columns: 1fr; row-gap: 4px; }
+  .info { row-gap: 16px; }
+  .acc-map { width: 100%; max-width: 100%; margin-left: 0; }
+  .footer__top { flex-direction: column; align-items: flex-start; gap: 18px; }
+}
+
+/* 9. Reduced motion — keep fades, drop travel -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-ind__line::after { animation: none; transform: none; }
+  .marquee { overflow-x: auto; }
+  .marquee__track { animation: none; }
+  .acc-panel, .acc-panel__content, .acc-head__arrow { transition-duration: 0.01s !important; }
+  .menu__sheet, .menu__item .line { transition-duration: 0.01s !important; transition-delay: 0s !important; }
+}
+
+/* Fork cursor (chrome.js › initFork). The wrapper sits on the pointer; the fork hangs from the tips of its tines,
+   so those stay on the pointer while it swings. Mouse only — the class is set once the image has loaded. */
+html.has-fork, html.has-fork * { cursor: none !important; }
+.fork { position: fixed; left: 0; top: 0; z-index: 2147483000; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 0.18s ease; will-change: transform; }
+.fork.is-on { opacity: 1; }
+.fork__img {
+  position: absolute; left: 0; top: 0; height: var(--fork-h, 64px); width: auto; max-width: none;
+  transform-origin: 50% 0; transform: translate(-50%, 0) rotate(var(--fork-rest, -30deg));
+  transition: transform 0.34s cubic-bezier(0.3, 1.5, 0.5, 1);
+  filter: drop-shadow(0 1px 1.5px rgba(15, 7, 2, 0.45));
+}
+.fork.is-down .fork__img { transform: translate(-50%, 0) rotate(var(--fork-press, -60deg)) scale(var(--fork-scale, 0.95)); transition: transform 0.12s ease-out; }
+@media (prefers-reduced-motion: reduce) { .fork__img { transition-duration: 0.01s !important; } }
