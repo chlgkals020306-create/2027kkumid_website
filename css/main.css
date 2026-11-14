@@ -23,7 +23,8 @@
      viewport ("contain"), so on a wide window nothing gets larger than it is in the design.
      Every size is written as "Figma px × --px"; the px value in front of a max() is only the floor
      for phones (--fl turns the floors down on desktop layouts so the proportion stays exact). */
-  --px: min(100vw / 1293, 100vh / 850);
+  /* --vw (set by js/chrome.js) = width of the page without the window scrollbar; 100vw would count the bar in */
+  --px: min(var(--vw, 100vw) / 1293, 100vh / 850);
   --fl: 0.6;
   --sp: max(calc(0.78px * var(--fl)), var(--px));          /* same unit, for spacing */
   /* Side margin: 40 Figma px from the window edge — on every page, exactly like the home scenes.
@@ -41,8 +42,16 @@
 
 /* 2. Base & type ----------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scrollbar-width: none; -ms-overflow-style: none; }
-html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }   /* the window scrollbar is hidden on every page */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+/* Window scrollbar — visible on every page: grey track (#D7D7D7), orange bar (#FF610A), square, 8px wide.
+   Chrome · Edge · Safari draw it from the ::-webkit-scrollbar rules (change the width there);
+   Firefox takes the two colours from scrollbar-color. Touch devices keep their own overlay indicator. */
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track, html::-webkit-scrollbar-corner { background: #D7D7D7; }
+html::-webkit-scrollbar-thumb { background: #FF610A; }
+@supports not selector(::-webkit-scrollbar) {
+  html { scrollbar-color: #FF610A #D7D7D7; scrollbar-width: thin; }
+}
 body {
   margin: 0;
   background: var(--white);

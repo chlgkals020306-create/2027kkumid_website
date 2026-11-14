@@ -96,7 +96,7 @@
    profile → the texts leave, the photo keeps its place and only changes size and ratio →
    interview → everything leaves → white → works.
    --u = one Figma pixel of the 1293 × 850 frame, so every measure below reads like the design. */
-.dz { --u: min(100vw / 1293, 100vh / 850); --w: calc(100vw / 1293); }
+.dz { --u: min(var(--vw, 100vw) / 1293, 100vh / 850); --w: calc(var(--vw, 100vw) / 1293); }
 /* --w: the unit of the works row (Figma "designer_works") = the 1293px frame fitted to the window WIDTH,
    so the row keeps the proportions of the frame on every screen: two works in full, the third one running
    off the right edge (x 287 · 667 · 1047, 350 wide → 104 of the third are cut). */
@@ -195,7 +195,7 @@
    exactly the proportion it has in the design: 8 portraits, 136.8 × 181, the active one 226 × 299.6,
    gap 4.9, centred. The row never moves — the portrait under the pointer grows, the one that was
    large shrinks, and the caption fades in underneath (js/pages.js › introduce). */
-.prof { --pu: calc(100vw / 1293); position: relative; display: flex; justify-content: center; height: calc(384 * var(--pu)); margin-top: max(calc(64px * var(--fl)), calc(135 * var(--px))); overflow: hidden; }
+.prof { --pu: calc(var(--vw, 100vw) / 1293); position: relative; display: flex; justify-content: center; height: calc(384 * var(--pu)); margin-top: max(calc(64px * var(--fl)), calc(135 * var(--px))); overflow: hidden; }
 .prof__strip { flex: none; height: calc(300 * var(--pu)); display: flex; align-items: center; gap: calc(4.917 * var(--pu)); }
 .prof__item { position: relative; flex: none; width: calc(136.8 * var(--pu)); height: calc(181 * var(--pu)); transition: width 0.7s var(--ease-out), height 0.7s var(--ease-out); cursor: default; outline-offset: 3px; }
 .prof__item.is-on { width: calc(226 * var(--pu)); height: calc(299.6 * var(--pu)); }
@@ -250,7 +250,7 @@
   .work-head__name { white-space: normal; line-height: 1.15; }
 
   /* Designer: no pinned stage on small screens — the three states simply follow each other. */
-  .dz { --u: calc(100vw / 500); --w: var(--u); }
+  .dz { --u: calc(var(--vw, 100vw) / 500); --w: var(--u); }
   .dz__track { height: auto; }
   .dz__stage { position: static; height: auto; overflow: visible; padding: 96px 0 56px; }
   .dz__photo, .dz__name, .dz__intro, .dz__contact, .dz__interview, .dz__works, .dz__bar, .dz__strip { position: static; }
@@ -271,7 +271,7 @@
   .dz__scroll { display: none; }
 }
 @media (max-width: 560px) {
-  .prof { --pu: calc(100vw / 620); justify-content: flex-start; overflow-x: auto; padding: 0 var(--gutter); scrollbar-width: none; }
+  .prof { --pu: calc(var(--vw, 100vw) / 620); justify-content: flex-start; overflow-x: auto; padding: 0 var(--gutter); scrollbar-width: none; }
   .filters { gap: 14px; }
 }
 

@@ -127,7 +127,7 @@
       bar.setAttribute('aria-valuenow', Math.round(x * 100));
     }, 0.085);
     function measure() {
-      vw = window.innerWidth; vh = window.innerHeight; unit = RT.unit();
+      vw = RT.vw(); vh = window.innerHeight; unit = RT.unit();
       u = Math.min(vw / 1293, vh / 850);
       top = track.getBoundingClientRect().top + window.scrollY;
       /* Works row (Figma "designer_works"): laid out in w = the frame fitted to the window WIDTH, so on every

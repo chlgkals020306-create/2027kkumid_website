@@ -28,7 +28,7 @@
       /* The card sits just above the hovered dish, left-aligned a little inside it (as in the Figma
          frame "메인_인터렉션"), and leans a few pixels toward the pointer. No room above → beside it. */
       function aim(hit) {
-        const cw = card.offsetWidth, ch = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+        const cw = card.offsetWidth, ch = card.offsetHeight, vw = RT.vw(), vh = window.innerHeight;
         const r = hit.getBoundingClientRect(), gap = Math.max(14, vh * 0.028);
         tx = r.left + r.width * 0.14;
         ty = r.top - ch - gap;

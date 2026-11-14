@@ -54,7 +54,8 @@
   /* The same scale as css/main.css › SCALE: one Figma pixel on screen = the 1293 × 850 frame fitted
      into the window by width and by height. */
   const phone = window.matchMedia('(max-width: 860px), (max-aspect-ratio: 1/1)');
-  RT.px = () => Math.min(window.innerWidth / 1293, window.innerHeight / 850);
+  RT.vw = () => document.documentElement.clientWidth || window.innerWidth;              // page width without the window scrollbar (= --vw)
+  RT.px = () => Math.min(RT.vw() / 1293, window.innerHeight / 850);
   RT.gutter = () => Math.max(20 * (phone.matches ? 1 : 0.6), 40 * RT.px());            // = --gutter
   RT.navScale = () => (phone.matches ? 1 : Math.max(0.6, RT.px()));
   /* One "screen" of scroll-driven motion in pixels (RT.timelineConfig.scrollUnit) — the same on every device.
@@ -65,6 +66,7 @@
   RT.damp = (k, dt) => 1 - Math.pow(1 - k, Math.min(Math.max(dt, 0), 100) / (1000 / 60));
   function setScale() {
     const root = document.documentElement, u = RT.timelineConfig && RT.timelineConfig.scrollUnit;
+    root.style.setProperty('--vw', RT.vw() + 'px');
     root.style.setProperty('--nk', RT.navScale().toFixed(4));
     if (u > 0) root.style.setProperty('--su', u + 'px'); else root.style.removeProperty('--su');
   }
@@ -318,7 +320,7 @@
     const place = () => { node.style.transform = `translate3d(${x}px,${y}px,0)`; };
     /* would the cursor picture reach past the page? (2px spare) */
     const edge = () => known && (x - N.hot[0] < 2 || y - N.hot[1] < 2 ||
-      x - N.hot[0] + N.size[0] > window.innerWidth - 2 || y - N.hot[1] + N.size[1] > window.innerHeight - 2);
+      x - N.hot[0] + N.size[0] > RT.vw() - 2 || y - N.hot[1] + N.size[1] > window.innerHeight - 2);
     function sync() {
       if (!ready) return;
       const next = native && !busy && !edge() ? 'native' : 'drawn';
@@ -352,12 +354,13 @@
     }
     window.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'touch') return;
-      x = e.clientX; y = e.clientY; known = true; inside = true;
+      x = e.clientX; y = e.clientY; known = true; inside = x < RT.vw();   // on the window scrollbar the system shows its own arrow
       if (mode !== 'native') place();
       sync();
     }, { passive: true });
     window.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'touch') { inside = false; sync(); return; }
+      if (e.clientX >= RT.vw()) { inside = false; sync(); return; }   // a press on the window scrollbar: not a click on the page
       x = e.clientX; y = e.clientY; known = true; inside = true; busy = true; place(); sync();
       clearTimeout(timer); downAt = performance.now();
       node.getBoundingClientRect();                                   // the fork is in place in its resting pose before it starts to turn
@@ -445,6 +448,16 @@
       initTop();
       setScale();
       window.addEventListener('resize', setScale);
+      // The window scrollbar takes its width from the page the moment the content becomes taller than the window —
+      // without a resize event. Follow the real page width, and let every module measure again.
+      if (window.ResizeObserver) {
+        let seen = RT.vw();
+        new ResizeObserver(() => {
+          const now = RT.vw();
+          if (now === seen) return;
+          seen = now; setScale(); window.dispatchEvent(new Event('resize'));
+        }).observe(document.documentElement);
+      }
       initMenu(); initFooter(); initLinks(); initFork(); initWheel();
     },
     /* Sub pages: call once the page content has been rendered. */

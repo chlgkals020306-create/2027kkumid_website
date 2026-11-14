@@ -236,7 +236,7 @@
     if (!S) return;
     const KEYS = [' ', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'];
     const QUIET = S.quiet == null ? 160 : S.quiet, SETTLE = S.settle == null ? 1600 : S.settle;
-    let last = window.scrollY, gliding = false, raf = 0, touching = false, lastWheel = 0;
+    let last = window.scrollY, gliding = false, raf = 0, touching = false, lastWheel = 0, lastKey = 0;
     const mainY = () => geo.trackTop + S.to * geo.unit;
     const release = () => { cancelAnimationFrame(raf); gliding = RT.gliding = false; glideY = null; last = window.scrollY; };
     function glide(to) {
@@ -260,6 +260,9 @@
       if (gliding) return;
       const dir = y - last; last = y;
       if (touching || !dir || document.body.classList.contains('menu-open')) return;
+      // Only scrolling that comes from the wheel / trackpad or the keyboard is taken over. Dragging the window
+      // scrollbar moves the page with no such input: the glide would fight the hand on the bar, so it stays out.
+      if (performance.now() - Math.max(lastWheel, lastKey) > 1000) return;
       const top = geo.trackTop, a = top + S.from * geo.unit, b = mainY();
       if (dir > 0 && y > a && y < b - 2) glide(b);
       else if (dir < 0 && S.back != null && y > top + 2 && y < b - S.back * geo.unit) glide(top);
@@ -268,7 +271,7 @@
       touching = false; lastWheel = performance.now();
       if (gliding && e.cancelable) e.preventDefault();
     }, { passive: false });
-    window.addEventListener('keydown', (e) => { if (gliding && KEYS.includes(e.key)) e.preventDefault(); });
+    window.addEventListener('keydown', (e) => { if (!KEYS.includes(e.key)) return; lastKey = performance.now(); if (gliding) e.preventDefault(); });
     window.addEventListener('touchstart', () => { touching = true; if (gliding) release(); }, { passive: true });
     window.addEventListener('mousemove', () => { touching = false; }, { passive: true });
   }
