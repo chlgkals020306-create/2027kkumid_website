@@ -454,14 +454,14 @@ body.is-leaving { pointer-events: none; }
   .footer__top { flex-direction: column; align-items: flex-start; gap: 18px; }
 }
 
-/* 9. Reduced motion — keep fades, drop travel -------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .scroll-ind__line::after { animation: none; transform: none; }
-  .marquee { overflow-x: auto; }
-  .marquee__track { animation: none; }
-  .acc-panel, .acc-panel__content, .acc-head__arrow { transition-duration: 0.01s !important; }
-  .menu__sheet, .menu__item .line { transition-duration: 0.01s !important; transition-delay: 0s !important; }
-}
+/* 9. Reduced motion — keep fades, drop travel --------------------------------
+   Only when RT.motion.respectReducedMotion is true (js/data.js): js/chrome.js then puts .reduced-motion on <html>
+   for visitors whose system asks for less animation. By default the site moves the same way on every device. */
+.reduced-motion .scroll-ind__line::after { animation: none; transform: none; }
+.reduced-motion .marquee { overflow-x: auto; }
+.reduced-motion .marquee__track { animation: none; }
+.reduced-motion .acc-panel, .reduced-motion .acc-panel__content, .reduced-motion .acc-head__arrow { transition-duration: 0.01s !important; }
+.reduced-motion .menu__sheet, .reduced-motion .menu__item .line { transition-duration: 0.01s !important; transition-delay: 0s !important; }
 
 /* Fork cursor (chrome.js › initFork). At rest the fork is a real system cursor (html.fork-native — the script puts
    the cursor image into --fork-cursor). While clicking and near the window edges the page draws it instead
@@ -479,4 +479,4 @@ html.fork-native, html.fork-native * { cursor: var(--fork-cursor, auto) !importa
   filter: drop-shadow(0 1px 1.5px rgba(15, 7, 2, 0.45));
 }
 .fork.is-down .fork__img { transform: translate(-50%, 0) rotate(var(--fork-press, -60deg)) scale(var(--fork-scale, 0.95)); transition: transform 0.12s ease-out; }
-@media (prefers-reduced-motion: reduce) { .fork__img { transition-duration: 0.01s !important; } }
+.reduced-motion .fork__img { transition-duration: 0.01s !important; }

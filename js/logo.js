@@ -43,7 +43,7 @@
       }
       const finished = () => load(last).then(() => draw(last));
 
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduced = RT.env.reduced.matches;                      // false unless RT.motion.respectReducedMotion (js/data.js)
       if (reduced) { finished(); return; }
 
       /* The frames arrive one by one. Playback starts as soon as the first ones are there and never runs ahead

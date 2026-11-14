@@ -276,7 +276,6 @@
 }
 
 /* 10. Reduced motion — keep the fades, drop the travel ------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  [data-rv], [data-rv="lines"] .line, .dz-l > .line, .wcard { transform: none !important; }
-  .card__media, .wrow__media img, .prof__item { transition-duration: 0.01s !important; }
-}
+/* (html.reduced-motion: see css/main.css › 9 — off unless RT.motion.respectReducedMotion is true) */
+.reduced-motion [data-rv], .reduced-motion [data-rv="lines"] .line, .reduced-motion .dz-l > .line, .reduced-motion .wcard { transform: none !important; }
+.reduced-motion .card__media, .reduced-motion .wrow__media img, .reduced-motion .prof__item { transition-duration: 0.01s !important; }

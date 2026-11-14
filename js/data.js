@@ -7,6 +7,15 @@
    ========================================================================== */
 window.RT = window.RT || {};
 
+/* Motion and the system setting "reduce / turn off animations"
+   (Windows: 설정 › 접근성 › 시각 효과 › 애니메이션 효과 · macOS: 손쉬운 사용 › 디스플레이 › 동작 줄이기).
+   On many laptops animations are turned off there (to save battery or for speed). When the site obeys it, the intro
+   logo is not written on (only the finished logo shows), the intro → main glide becomes an instant jump and all
+   scroll smoothing is dropped — the site then looks broken and far too fast.
+     false  the site always plays its motion, on every device (default)
+     true   obey the system setting again (static logo, no glide, no smoothing for those visitors) */
+RT.motion = { respectReducedMotion: false };
+
 RT.data = {
   ui: {
     scroll: '스크롤을 내려보세요',
@@ -231,6 +240,15 @@ RT.timelineConfig = {
      a small laptop window and a tablet. Larger = everything takes more scrolling (slower); smaller = less.
      null = one viewport height (the old behaviour: a low laptop window then runs through the site faster). */
   scrollUnit: 1000,
+  /* Wheel and trackpad input. A trackpad swipe reports several times more scrolling than a pull on a mouse wheel
+     and keeps going with momentum, so on a laptop the same gesture used to run through far more of the site.
+     Inside the scroll-driven parts the input is therefore evened out:
+       trackpad  share of a trackpad's reported distance that is used (1 = all of it; lower = a laptop needs more swiping)
+       maxSpeed  fastest the page may move, in pixels per second (with scrollUnit 1000: 1200 = 1.2 screens a second)
+       lead      how far the page may still run on after the input has stopped, in pixels (what is beyond is dropped)
+       ease      how quickly the page follows the input (per 1/60 s; higher = tighter)
+     A mouse wheel used at a normal pace is not changed by any of this. null = leave all wheel input to the browser. */
+  wheel: { trackpad: 0.55, maxSpeed: 1200, lead: 400, ease: 0.16 },
   end: 20.5,                       // pinned length; the details section rises at the very end
   smoothing: 0.085,                // inertia of the scrub (1 = none). Lower = heavier, more gliding.
                                    // Measured per 1/60 s and converted to the real frame time, so 60 / 120 / 144 Hz

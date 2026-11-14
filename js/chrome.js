@@ -25,7 +25,16 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   RT.dom = { $, $$, el, esc };
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  /* Reduced motion: only honoured when RT.motion.respectReducedMotion is true (js/data.js) — otherwise the site
+     plays the same motion on every device, whatever the system's animation setting is. Every module asks this
+     one object, and the CSS uses html.reduced-motion instead of the media query. */
+  const systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const reduced = {
+    get matches() { return !!(RT.motion && RT.motion.respectReducedMotion) && systemReduced.matches; },
+    onChange(fn) { if (systemReduced.addEventListener) systemReduced.addEventListener('change', () => fn(reduced.matches)); }
+  };
+  const flagReduced = () => document.documentElement.classList.toggle('reduced-motion', reduced.matches);
+  flagReduced(); reduced.onChange(flagReduced);
   RT.env = { fine, reduced };
 
   /* Line-by-line text: one <span class="line"> per array item. `art` wraps the text for the
@@ -371,12 +380,72 @@
     window.addEventListener('pagehide', () => { if (known) { try { sessionStorage.setItem(KEY, JSON.stringify([x, y])); } catch (e) { /* private mode */ } } });
   }
 
+  /* — wheel & trackpad: the same pace on every device —
+     A mouse wheel reports about 100px per notch; a trackpad swipe reports several times that and keeps sending
+     momentum after the fingers have left, so the same gesture used to run through far more of a scroll-driven page
+     on a laptop. On pages with such a part (a "zone", registered by the home timeline and the designer page) this
+     takes the wheel over and moves the page itself (settings: RT.timelineConfig.wheel in js/data.js):
+       · inside a zone a trackpad's distance is scaled down (`trackpad`), the page never moves faster than
+         `maxSpeed`, and it runs on at most `lead` px after the input stops — a hard flick cannot skip scenes;
+       · outside the zones (the details section, the footer) the distance is left as it is, only eased.
+     Touch, keyboard, pinch-zoom, sideways scrolling and scrollable boxes inside the page are left to the browser. */
+  const zones = [];
+  RT.wheel = { zone(fn) { zones.push(fn); } };
+  function initWheel() {
+    const W = RT.timelineConfig && RT.timelineConfig.wheel;
+    if (!W) return;
+    let pos = 0, goal = 0, raf = 0, prev = 0, lastSet = 0, kind = 'wheel', lastEvent = 0;
+    const active = () => zones.map((fn) => fn()).filter(Boolean);
+    const within = (list, y) => list.some((z) => y >= z[0] - 1 && y <= z[1] + 1);
+    const maxY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const scrollsItself = (node) => {
+      for (; node && node.nodeType === 1 && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+        if (node.scrollHeight > node.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(node).overflowY)) return true;
+      }
+      return false;
+    };
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; prev = 0; };
+    function loop(now) {
+      const dt = prev ? now - prev : 1000 / 60; prev = now;
+      if (RT.gliding || Math.abs(window.scrollY - lastSet) > 3) { stop(); return; }   // something else moved the page: hand over
+      let step = (goal - pos) * RT.damp(W.ease || 0.16, dt);
+      if (W.maxSpeed && within(active(), pos)) { const m = (W.maxSpeed * Math.min(dt, 100)) / 1000; step = clamp(step, -m, m); }
+      pos += step;
+      if (Math.abs(goal - pos) < 0.5) pos = goal;
+      window.scrollTo(0, pos); lastSet = window.scrollY;
+      if (pos === goal) { stop(); return; }
+      raf = requestAnimationFrame(loop);
+    }
+    window.addEventListener('wheel', (e) => {
+      if (document.body.classList.contains('menu-open')) { stop(); if (e.cancelable) e.preventDefault(); return; }   // nothing scrolls under the open menu
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || reduced.matches) return;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || scrollsItself(e.target)) return;
+      const list = active();
+      if (!list.length) return;                                    // no scroll-driven part on this page (or phone layout)
+      if (RT.gliding) { stop(); if (e.cancelable) e.preventDefault(); return; }   // the intro ⇄ main glide owns the page
+      if (!e.cancelable) { stop(); return; }                       // the browser is already scrolling this gesture itself
+      e.preventDefault();
+      const now = performance.now();
+      // mouse wheel or trackpad? A wheel reports whole notches (wheelDelta in steps of 120, or lines / pages);
+      // decided at the start of a gesture and kept for as long as its events keep coming.
+      if (now - lastEvent > 150) { const wd = Math.abs(e.wheelDeltaY || 0); kind = e.deltaMode !== 0 || (wd >= 120 && wd % 120 === 0) ? 'wheel' : 'pad'; }
+      lastEvent = now;
+      let d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? window.innerHeight * 0.9 : 1);
+      if (!raf || Math.abs(window.scrollY - lastSet) > 3) { pos = goal = lastSet = window.scrollY; }
+      const zoned = within(list, pos);
+      if (zoned && kind === 'pad') d *= W.trackpad == null ? 1 : W.trackpad;
+      goal = clamp(goal + d, 0, maxY());
+      if (zoned && W.lead) goal = clamp(goal, pos - W.lead, pos + W.lead);
+      if (!raf) raf = requestAnimationFrame(loop);
+    }, { passive: false });
+  }
+
   RT.chrome = {
     init() {
       initTop();
       setScale();
       window.addEventListener('resize', setScale);
-      initMenu(); initFooter(); initLinks(); initFork();
+      initMenu(); initFooter(); initLinks(); initFork(); initWheel();
     },
     /* Sub pages: call once the page content has been rendered. */
     enter() {

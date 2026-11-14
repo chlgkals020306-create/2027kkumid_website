@@ -238,12 +238,12 @@
     const QUIET = S.quiet == null ? 160 : S.quiet, SETTLE = S.settle == null ? 1600 : S.settle;
     let last = window.scrollY, gliding = false, raf = 0, touching = false, lastWheel = 0;
     const mainY = () => geo.trackTop + S.to * geo.unit;
-    const release = () => { cancelAnimationFrame(raf); gliding = false; glideY = null; last = window.scrollY; };
+    const release = () => { cancelAnimationFrame(raf); gliding = RT.gliding = false; glideY = null; last = window.scrollY; };
     function glide(to) {
       const from = window.scrollY, full = S.to * geo.unit || 1;
       const ms = reduce ? 0 : S.duration * clamp(Math.abs(to - from) / full, 0.5, 1), t0 = performance.now();
       let arrived = 0;
-      gliding = true;
+      gliding = RT.gliding = true;                             // js/chrome.js › initWheel stands back meanwhile
       const step = (now) => {
         const t = ms ? clamp((now - t0) / ms) : 1;
         glideY = from + (to - from) * ease.inOut(t);
@@ -294,9 +294,8 @@
         n.querySelectorAll('.line').forEach((l) => list.push(l));
         groups.set(n.dataset.group, list);
       });
-      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-      reduce = mq.matches;
-      mq.addEventListener && mq.addEventListener('change', (e) => { reduce = e.matches; groupKey.clear(); dirty = true; });
+      reduce = RT.env.reduced.matches;                         // false unless RT.motion.respectReducedMotion (js/data.js)
+      RT.env.reduced.onChange((on) => { reduce = on; groupKey.clear(); dirty = true; });
 
       measure();
       readTarget(); current = target;                          // no intro "catch-up" when the page loads mid-scroll
@@ -308,6 +307,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
       dom.navLogo.classList.add('is-ready');
       initSnap();
+      RT.wheel.zone(() => [geo.trackTop, geo.trackTop + C.end * geo.unit]);   // the pinned stretch: wheel / trackpad evened out
       requestAnimationFrame(frame);
     },
     on(fn) { listeners.push(fn); },

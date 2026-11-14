@@ -11,7 +11,7 @@
   function initReveal() {
     const { clamp, ease } = RT.util;
     const K = RT.timelineConfig.lineStagger;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = RT.env.reduced;
     const items = [...document.querySelectorAll('[data-reveal]')].map((node) => ({ node, lines: [...node.querySelectorAll('.line')], key: '' }));
     let queued = false;
     const draw = () => {
@@ -62,7 +62,7 @@
     const pin = $('[data-pin]'), rows = [...document.querySelectorAll('.acc-item')];
     if (!pin || !rows.length) return;
     const { clamp, ease } = RT.util;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = RT.env.reduced;
     const space = pin.querySelector('.details__hold');
     let queued = false, last = '';
     const draw = () => {

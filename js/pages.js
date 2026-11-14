@@ -218,6 +218,7 @@
     strip.addEventListener('touchmove', (e) => { if (max && !flow.matches) pan.set(clamp(sp - (e.touches[0].clientX - sx) / max), true); }, { passive: true });
 
     measure();
+    RT.wheel.zone(() => (flow.matches ? null : [top, top + DZ.end * unit]));   // the pinned stretch: wheel / trackpad evened out
     target = clamp((window.scrollY - top) / unit, 0, DZ.end); current = target;
     let raf = 0;
     const remeasure = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
