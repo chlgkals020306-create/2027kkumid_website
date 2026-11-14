@@ -3,6 +3,7 @@
    "Rare" is written on stroke by stroke, then TASTE fades in (reference: logo.mov).
    The movie is shipped as a frame sequence (white + alpha) and drawn on a canvas, tinted with
    RT.data.intro.logoAnim.color — works in every browser, also when opened from the file system.
+   Timing is real time: the same on every screen refresh rate and on slow machines.
    It loops: write on → the finished logo rests for `hold` seconds → fades out over `fade` seconds →
    a short `gap` → starts again. (loop: false = play once and stay. Reduced motion: finished logo only.)
    ========================================================================== */
@@ -45,30 +46,47 @@
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduced) { finished(); return; }
 
-      Promise.all(frames.fill(0).map((_, i) => load(i))).then(() => {
-        if (frames.filter(Boolean).length < cfg.count) { finished(); return; }   // a frame is missing → no half animation
-        const play = cfg.count / cfg.fps, hold = cfg.hold == null ? 1.6 : cfg.hold, fade = cfg.fade == null ? 1 : cfg.fade, gap = cfg.gap == null ? 0.4 : cfg.gap;
-        const cycle = play + hold + fade + gap, loop = cfg.loop !== false;
-        let t0 = 0, alpha = -1;
-        const setAlpha = (v) => { if (v !== alpha) { alpha = v; canvas.style.opacity = v; } };
-        const step = (now) => {
-          if (!t0) t0 = now + (cfg.delay || 0) * 1000;
-          if (window.scrollY < window.innerHeight) {                // the intro is on screen (further down nothing is drawn)
-            let t = Math.max(0, (now - t0) / 1000);
-            if (loop) t %= cycle;
-            if (t < play + hold || !loop) {                          // writing on, then resting
-              draw(Math.min(last, Math.floor(t * cfg.fps))); setAlpha(1);
-            } else if (t < play + hold + fade) {                     // fading out
-              const k = (t - play - hold) / fade;
-              draw(last); setAlpha((1 - k * k * (3 - 2 * k)).toFixed(3));
-            } else {                                                 // empty, ready for the next round
-              setAlpha(0); draw(0);
-            }
+      /* The frames arrive one by one. Playback starts as soon as the first ones are there and never runs ahead
+         of what has loaded: on a slow connection or a slow machine the writing simply waits for the next frame
+         instead of the logo staying empty until all 86 files are in. The clock is real time (not frames drawn),
+         so the animation takes equally long at any refresh rate. */
+      const state = new Array(cfg.count).fill(0);                  // 0 loading · 1 there · -1 failed
+      let ready = 0, failed = 0;                                   // frames 0 … ready-1 are settled
+      for (let i = 0; i < cfg.count; i++) {
+        load(i).then(() => {
+          state[i] = frames[i] ? 1 : -1; if (!frames[i]) failed++;
+          while (ready < cfg.count && state[ready]) ready++;
+        });
+      }
+      const play = cfg.count / cfg.fps, hold = cfg.hold == null ? 1.6 : cfg.hold, fade = cfg.fade == null ? 1 : cfg.fade, gap = cfg.gap == null ? 0.4 : cfg.gap;
+      const cycle = play + hold + fade + gap, loop = cfg.loop !== false;
+      let t0 = 0, prev = 0, alpha = -1, stopped = false;
+      const setAlpha = (v) => { if (v !== alpha) { alpha = v; canvas.style.opacity = v; } };
+      const step = (now) => {
+        if (stopped) return;
+        if (ready === cfg.count && (state[last] < 0 || failed > cfg.count * 0.1)) {   // too much is missing → the finished logo only
+          stopped = true; setAlpha(1); finished(); return;
+        }
+        if (!t0) t0 = now + (cfg.delay || 0) * 1000;
+        if (window.scrollY < window.innerHeight) {                // the intro is on screen (further down nothing is drawn)
+          let t = Math.max(0, (now - t0) / 1000);
+          if (ready < cfg.count && Math.floor(t * cfg.fps) >= ready && prev) {   // the next frame has not arrived yet: wait for it
+            t0 += now - prev; t = Math.max(0, (now - t0) / 1000);
           }
-          requestAnimationFrame(step);
-        };
+          if (loop) t %= cycle;
+          if (t < play + hold || !loop) {                          // writing on, then resting
+            draw(Math.min(last, Math.floor(t * cfg.fps))); setAlpha(1);
+          } else if (t < play + hold + fade) {                     // fading out
+            const k = (t - play - hold) / fade;
+            draw(last); setAlpha((1 - k * k * (3 - 2 * k)).toFixed(3));
+          } else {                                                 // empty, ready for the next round
+            setAlpha(0); draw(0);
+          }
+        }
+        prev = now;
         requestAnimationFrame(step);
-      });
+      };
+      requestAnimationFrame(step);
     }
   };
 })();

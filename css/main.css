@@ -30,7 +30,9 @@
      The navigation, titles, grids and footers all hang on this one value. */
   --gutter: max(calc(20px * var(--fl)), calc(40 * var(--px)));
   --nk: 1;                           /* navigation scale = --px (set by js/chrome.js; 1 on phones) */
-  --screens: 11.4;                   /* track length in viewport heights (timeline end + 1) */
+  --screens: 21.5;                   /* timeline end + 1 (set by js/timeline.js) */
+  /* --su (set by js/chrome.js from RT.timelineConfig.scrollUnit): pixels of scrolling per "screen" of scroll-driven
+     motion — a fixed number, so every device needs the same amount of scrolling. Unset = one viewport height. */
 
   /* One easing family for the whole site */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -204,7 +206,8 @@ body > .footer { transition: opacity 0.42s ease; }
 body.is-leaving { pointer-events: none; }
 
 /* 5. Stage & scenes -------------------------------------------------------- */
-.track { height: calc(var(--screens) * 100vh); height: calc(var(--screens) * 100svh); }
+/* the pinned stretch = (screens − 1) scroll units, plus the one viewport the stage itself takes */
+.track { height: calc(var(--screens) * 100vh); height: calc((var(--screens) - 1) * var(--su, 100svh) + 100svh); }
 .stage {
   position: sticky; top: 0;
   height: 100vh; height: 100svh;
@@ -361,7 +364,7 @@ body.is-leaving { pointer-events: none; }
    and stays for the height of .details__hold; PARTNERS comes up underneath meanwhile and takes over
    when the hold ends. A longer hold = the panel stays longer. */
 .details__panel { position: sticky; top: 0; background: var(--white); }
-.details__hold { height: 60vh; height: 60svh; }
+.details__hold { height: 60vh; height: calc(0.6 * var(--su, 100svh)); }
 .details__pin .acc-item { opacity: 0; will-change: transform, opacity; }
 .details__block { padding: max(calc(92px * var(--fl)), calc(113.8 * var(--px))) var(--gutter) 0; }
 .details__block--partners { padding-top: max(calc(90px * var(--fl)), calc(170.4 * var(--px))); }

@@ -100,7 +100,7 @@
 /* --w: the unit of the works row (Figma "designer_works") = the 1293px frame fitted to the window WIDTH,
    so the row keeps the proportions of the frame on every screen: two works in full, the third one running
    off the right edge (x 287 · 667 · 1047, 350 wide → 104 of the third are cut). */
-.dz__track { height: calc(var(--dz-screens, 5.4) * 100vh); height: calc(var(--dz-screens, 5.4) * 100svh); }
+.dz__track { height: calc(var(--dz-screens, 5.4) * 100vh); height: calc((var(--dz-screens, 5.4) - 1) * var(--su, 100svh) + 100svh); }   /* same scroll unit as the home timeline */
 .dz__stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 .dz__photo { position: absolute; right: 0; top: calc(91 * var(--u)); width: calc(513 * var(--u)); height: calc(513 * var(--u)); overflow: hidden; background: #ececef; will-change: width, height, opacity; }
 .dz__photo img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.04); transition: opacity 1.1s ease, transform 1.6s var(--ease-out); }

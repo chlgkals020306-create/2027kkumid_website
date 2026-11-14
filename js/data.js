@@ -219,22 +219,32 @@ RT.data.titleArt = {
 };
 
 /* --------------------------------------------------------------------------
-   Scroll timeline — unit = one viewport height of scrolling ("screen").
+   Scroll timeline — unit = one "screen" of scrolling = `scrollUnit` pixels, the same on every device.
    Everything is scrubbed by scroll: [start, end] is the stretch of scrolling
    a move takes. Longer stretch = slower, calmer transition.
    Text groups have an `in` and an `out` stretch; their lines are revealed
    one after another inside that stretch (see `lineStagger`).
    -------------------------------------------------------------------------- */
 RT.timelineConfig = {
-  end: 20.5,                       // pinned length; the details section rises during the last screen
-  smoothing: 0.085,                // inertia of the scrub (1 = none). Lower = heavier, more gliding
+  /* How many pixels of scrolling one "screen" of this timeline takes. A fixed number, so the same amount of
+     scrolling (wheel notches, trackpad swipe, finger travel) moves the site equally far on a large monitor,
+     a small laptop window and a tablet. Larger = everything takes more scrolling (slower); smaller = less.
+     null = one viewport height (the old behaviour: a low laptop window then runs through the site faster). */
+  scrollUnit: 1000,
+  end: 20.5,                       // pinned length; the details section rises at the very end
+  smoothing: 0.085,                // inertia of the scrub (1 = none). Lower = heavier, more gliding.
+                                   // Measured per 1/60 s and converted to the real frame time, so 60 / 120 / 144 Hz
+                                   // screens and power-saving 30 fps modes all glide the same way
   lineStagger: 0.45,               // 0 = all lines together, 1 = strictly one after another
 
   /* Intro → main "sticky" step (mouse wheel / keys; touch scrolling is left alone):
        from  scrolling down past this point glides on by itself until the main scene fills the screen (`to`)
        back  scrolling back up from the main scene by more than this glides back to the intro (null = off)
-       duration  milliseconds for the whole distance */
-  introSnap: { from: 0.22, to: 2.0, back: 0.3, duration: 1250 },
+       duration  milliseconds for the whole distance
+       quiet / settle  after the glide the page stays on the main scene until the wheel or trackpad has been
+                 still for `quiet` ms (at most `settle` ms) — a trackpad swipe keeps sending momentum long after
+                 the fingers have left, and would otherwise carry the page straight past the main scene */
+  introSnap: { from: 0.22, to: 2.0, back: 0.3, duration: 1250, quiet: 160, settle: 1600 },
 
   introToMain:   [0.1, 1.9],       // background pan
   introLogoFade: [0.1, 0.75],      // the intro logo fades out …

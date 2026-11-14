@@ -2,8 +2,9 @@
    timeline.js — scroll-driven choreography of the pinned stage (scenes 01–07)
 
    Every visual state is a pure function of one number: `p`, the scroll
-   progress in viewport heights. Nothing is "played" — scrolling fast, slow
-   or backwards always lands on the correct frame.
+   progress in "screens" (one screen = RT.timelineConfig.scrollUnit pixels of
+   scrolling, the same on every device). Nothing is "played" — scrolling fast,
+   slow or backwards always lands on the correct frame.
      • scene motion → transforms / opacity / clip-path computed from p
      • text         → every line has its own slice of the group's scroll
                       stretch, so lines rise in one after another as you scroll
@@ -31,6 +32,7 @@
 
   const $ = (s) => document.querySelector(s);
   let dom, geo = {}, target = 0, current = 0, lastDrawn = -1, dirty = true, reduce = false;
+  let glideY = null, lastTime = 0;    // glideY: where the intro ⇄ main glide is right now (null = not gliding)
   const groups = new Map();           // text group name → its .line elements, in reading order
   const groupKey = new Map();
   const listeners = [];
@@ -52,6 +54,7 @@
   function measure() {
     const vw = dom.stage.clientWidth, vh = dom.stage.clientHeight;
     geo.vw = vw; geo.vh = vh;
+    geo.unit = RT.unit();                                      // pixels of scrolling per "screen" of the timeline
     geo.trackTop = dom.track.getBoundingClientRect().top + window.scrollY;
 
     // Background photo: "cover" the design frame (1293 × 850) and pan between two focus points.
@@ -205,10 +208,14 @@
   }
 
   /* — loop — */
-  function readTarget() { target = clamp((window.scrollY - geo.trackTop) / geo.vh, 0, C.end); }
-  function frame() {
+  function readTarget() {
+    const y = glideY != null ? glideY : window.scrollY;        // during the glide: its own position, not what the wheel adds on top
+    target = clamp((y - geo.trackTop) / geo.unit, 0, C.end);
+  }
+  function frame(now) {
     readTarget();
-    const k = reduce ? 1 : C.smoothing;
+    const dt = lastTime && now ? now - lastTime : 1000 / 60; lastTime = now || 0;
+    const k = reduce ? 1 : RT.damp(C.smoothing, dt);           // same glide at every refresh rate
     current = Math.abs(target - current) < 0.0006 ? target : current + (target - current) * k;
     if (current !== lastDrawn || dirty) {
       draw(current); lastDrawn = current; dirty = false;
@@ -220,23 +227,31 @@
   /* — intro ⇄ main: a sticky step —
      Scrolling down from the intro: once past C.introSnap.from the page glides on by itself until the main scene
      fills the screen (C.introSnap.to). Scrolling back up from there by more than `back` glides to the top again.
-     Wheel and key input is swallowed during the glide; touch scrolling is left alone (it has its own momentum). */
+     The glide owns the scroll position: wheel, trackpad and key input is swallowed while it runs, and after it
+     has arrived the page stays put until that input has gone quiet (`quiet`, at most `settle` ms) — the momentum
+     of a trackpad swipe outlasts the glide and would otherwise push the page on, past the main scene.
+     Touch scrolling is left alone (it has its own momentum). */
   function initSnap() {
     const S = C.introSnap;
     if (!S) return;
     const KEYS = [' ', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'];
-    let last = window.scrollY, gliding = false, raf = 0, touching = false;
-    const mainY = () => geo.trackTop + S.to * geo.vh;
+    const QUIET = S.quiet == null ? 160 : S.quiet, SETTLE = S.settle == null ? 1600 : S.settle;
+    let last = window.scrollY, gliding = false, raf = 0, touching = false, lastWheel = 0;
+    const mainY = () => geo.trackTop + S.to * geo.unit;
+    const release = () => { cancelAnimationFrame(raf); gliding = false; glideY = null; last = window.scrollY; };
     function glide(to) {
-      const from = window.scrollY, full = S.to * geo.vh || 1;
+      const from = window.scrollY, full = S.to * geo.unit || 1;
       const ms = reduce ? 0 : S.duration * clamp(Math.abs(to - from) / full, 0.5, 1), t0 = performance.now();
+      let arrived = 0;
       gliding = true;
       const step = (now) => {
         const t = ms ? clamp((now - t0) / ms) : 1;
-        last = from + (to - from) * ease.inOut(t);
-        window.scrollTo(0, last);
-        if (t < 1) raf = requestAnimationFrame(step);
-        else { gliding = false; last = window.scrollY; }
+        glideY = from + (to - from) * ease.inOut(t);
+        if (Math.abs(window.scrollY - glideY) > 0.5) window.scrollTo(0, glideY);   // also undoes whatever the wheel moved meanwhile
+        if (t < 1) { raf = requestAnimationFrame(step); return; }
+        if (!arrived) arrived = now;
+        if (now - lastWheel < QUIET && now - arrived < SETTLE) raf = requestAnimationFrame(step);   // momentum still coming in: hold
+        else release();
       };
       raf = requestAnimationFrame(step);
     }
@@ -245,13 +260,16 @@
       if (gliding) return;
       const dir = y - last; last = y;
       if (touching || !dir || document.body.classList.contains('menu-open')) return;
-      const top = geo.trackTop, a = top + S.from * geo.vh, b = mainY();
+      const top = geo.trackTop, a = top + S.from * geo.unit, b = mainY();
       if (dir > 0 && y > a && y < b - 2) glide(b);
-      else if (dir < 0 && S.back != null && y > top + 2 && y < b - S.back * geo.vh) glide(top);
+      else if (dir < 0 && S.back != null && y > top + 2 && y < b - S.back * geo.unit) glide(top);
     }, { passive: true });
-    window.addEventListener('wheel', (e) => { touching = false; if (gliding) e.preventDefault(); }, { passive: false });
+    window.addEventListener('wheel', (e) => {
+      touching = false; lastWheel = performance.now();
+      if (gliding && e.cancelable) e.preventDefault();
+    }, { passive: false });
     window.addEventListener('keydown', (e) => { if (gliding && KEYS.includes(e.key)) e.preventDefault(); });
-    window.addEventListener('touchstart', () => { touching = true; if (gliding) { cancelAnimationFrame(raf); gliding = false; } }, { passive: true });
+    window.addEventListener('touchstart', () => { touching = true; if (gliding) release(); }, { passive: true });
     window.addEventListener('mousemove', () => { touching = false; }, { passive: true });
   }
 
@@ -300,7 +318,7 @@
     /* Scroll to a timeline label (RT.timelineConfig.labels) or to an element selector. */
     scrollTo(to) {
       let y;
-      if (to in C.labels) y = geo.trackTop + C.labels[to] * geo.vh;
+      if (to in C.labels) y = geo.trackTop + C.labels[to] * geo.unit;
       else { const n = document.querySelector(to); if (!n) return; y = n.getBoundingClientRect().top + window.scrollY; }
       window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
     }

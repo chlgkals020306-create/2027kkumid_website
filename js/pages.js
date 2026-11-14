@@ -73,7 +73,7 @@
 
   /* ——————————————————————————————————————————————————————————————————
      DESIGNER (Figma "designer_profile" → "designer_interview" → "designer_works")
-     One pinned screen; `p` = scroll progress in viewport heights.
+     One pinned screen; `p` = scroll progress in "screens" (RT.unit() pixels each — the same on every device).
      —————————————————————————————————————————————————————————————————— */
   const DZ = {
     end: 4.3,                     // pinned length; the footer follows after it
@@ -83,7 +83,7 @@
     qaIn:     [1.0, 1.8],         // interview rows arrive
     qaOut:    [2.4, 2.95],        // … and leave, one after another
     photoOut: [2.7, 3.1],         // the photo goes last → white
-    worksAt:  3.3,                // past this point the works fade in by themselves (not scrubbed by scroll) …
+    worksAt:  3.3,                // (screens of RT.unit() px) past this point the works fade in by themselves (not scrubbed by scroll) …
     worksOff: 3.2                 // … and scrolling back above this point lets them fade out again
   };
   function designer() {
@@ -116,7 +116,7 @@
     const worksBox = $('[data-works]', stage), bar = $('[data-bar]', stage), thumb = $('[data-thumb]', stage), strip = $('[data-strip]', stage), cards = $$('.wcard', stage);
     track.style.setProperty('--dz-screens', DZ.end + 1);
 
-    let u = 1, w = 1, vw = 0, vh = 0, top = 0, target = 0, current = 0, drawn = -1, dirty = true, live = false, shown = false;
+    let u = 1, w = 1, vw = 0, vh = 0, unit = 1, lastTime = 0, top = 0, target = 0, current = 0, drawn = -1, dirty = true, live = false, shown = false;
     let max = 0, barW = 0, thumbW = 0;
     const stagger = (t, n, count, k) => { const w = 1 / (1 + (count - 1) * k); return clamp((t - n * k * w) / w); };
 
@@ -127,7 +127,7 @@
       bar.setAttribute('aria-valuenow', Math.round(x * 100));
     }, 0.085);
     function measure() {
-      vw = window.innerWidth; vh = window.innerHeight;
+      vw = window.innerWidth; vh = window.innerHeight; unit = RT.unit();
       u = Math.min(vw / 1293, vh / 850);
       top = track.getBoundingClientRect().top + window.scrollY;
       /* Works row (Figma "designer_works"): laid out in w = the frame fitted to the window WIDTH, so on every
@@ -192,11 +192,12 @@
       worksBox.style.pointerEvents = live ? '' : 'none';
     }
     function clear() { [photo, bar, worksBox, strip, ...outs, ...qa, ...cards].forEach((n) => n.removeAttribute('style')); stage.style.removeProperty('--dz-bar'); stage.style.removeProperty('--dz-media'); worksBox.classList.remove('is-in'); shown = false; drawn = -1; }
-    function frame() {
+    function frame(now) {
+      const dt = lastTime && now ? now - lastTime : 1000 / 60; lastTime = now || 0;
       if (flow.matches) { if (drawn !== -2) { clear(); drawn = -2; } requestAnimationFrame(frame); return; }
       if (drawn === -2) { measure(); drawn = -1; }
-      target = clamp((window.scrollY - top) / vh, 0, DZ.end);
-      const k = RT.env.reduced.matches ? 1 : DZ.smoothing;
+      target = clamp((window.scrollY - top) / unit, 0, DZ.end);
+      const k = RT.env.reduced.matches ? 1 : RT.damp(DZ.smoothing, dt);   // same glide at every refresh rate
       current = Math.abs(target - current) < 0.0006 ? target : current + (target - current) * k;
       if (current !== drawn || dirty) { draw(current); drawn = current; dirty = false; }
       requestAnimationFrame(frame);
@@ -217,7 +218,7 @@
     strip.addEventListener('touchmove', (e) => { if (max && !flow.matches) pan.set(clamp(sp - (e.touches[0].clientX - sx) / max), true); }, { passive: true });
 
     measure();
-    target = clamp((window.scrollY - top) / vh, 0, DZ.end); current = target;
+    target = clamp((window.scrollY - top) / unit, 0, DZ.end); current = target;
     let raf = 0;
     const remeasure = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
     window.addEventListener('resize', remeasure);

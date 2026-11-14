@@ -41,10 +41,13 @@
         tx = Math.max(16, Math.min(vw - cw - 16, tx));
         ty = Math.max(16, Math.min(vh - ch - 16, ty));
       }
-      function loop() {
-        cx += (tx - cx) * 0.16; cy += (ty - cy) * 0.16;
+      let prev = 0;
+      function loop(now) {
+        const k = RT.damp(0.16, prev && now ? now - prev : 1000 / 60); prev = now || 0;
+        cx += (tx - cx) * k; cy += (ty - cy) * k;
         card.style.transform = `translate3d(${cx.toFixed(1)}px,${cy.toFixed(1)}px,0)`;
         raf = active || Math.abs(tx - cx) + Math.abs(ty - cy) > 0.5 ? requestAnimationFrame(loop) : 0;
+        if (!raf) prev = 0;
       }
       function activate(hit, pin) {
         const id = hit.dataset.dish, d = byId.get(id), wasActive = !!active;

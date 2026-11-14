@@ -48,7 +48,17 @@
   RT.px = () => Math.min(window.innerWidth / 1293, window.innerHeight / 850);
   RT.gutter = () => Math.max(20 * (phone.matches ? 1 : 0.6), 40 * RT.px());            // = --gutter
   RT.navScale = () => (phone.matches ? 1 : Math.max(0.6, RT.px()));
-  function setScale() { document.documentElement.style.setProperty('--nk', RT.navScale().toFixed(4)); }
+  /* One "screen" of scroll-driven motion in pixels (RT.timelineConfig.scrollUnit) — the same on every device.
+     Used by the home timeline, the designer page and, through --su, by the CSS that sizes their scroll tracks. */
+  RT.unit = () => { const u = RT.timelineConfig && RT.timelineConfig.scrollUnit; return u > 0 ? u : window.innerHeight; };
+  /* Easing factors in this site are written "per frame at 60 fps". RT.damp converts one to the time that really
+     passed since the last frame, so motion takes equally long at 30, 60, 120 or 144 fps. */
+  RT.damp = (k, dt) => 1 - Math.pow(1 - k, Math.min(Math.max(dt, 0), 100) / (1000 / 60));
+  function setScale() {
+    const root = document.documentElement, u = RT.timelineConfig && RT.timelineConfig.scrollUnit;
+    root.style.setProperty('--nk', RT.navScale().toFixed(4));
+    if (u > 0) root.style.setProperty('--su', u + 'px'); else root.style.removeProperty('--su');
+  }
 
   /* — title lettering —
      Titles are live text in Caesura when the Adobe Fonts kit is available; otherwise the same
@@ -131,10 +141,13 @@
     const depth = [1, 1.3, 0.85, 1.2];                           // each line follows the pointer a little differently
     let open = false, raf = 0, ty = 0, cy = 0;
 
-    function loop() {                                            // the lines follow the pointer up and down only
-      cy += (ty - cy) * 0.075;
+    let prev = 0;
+    function loop(now) {                                         // the lines follow the pointer up and down only
+      const dt = prev && now ? now - prev : 1000 / 60; prev = now || 0;
+      cy += (ty - cy) * RT.damp(0.075, dt);
       rows.forEach((row, i) => { row.style.transform = `translate3d(0,${(cy * depth[i % depth.length]).toFixed(2)}px,0)`; });
       raf = open || Math.abs(ty - cy) > 0.05 ? requestAnimationFrame(loop) : 0;
+      if (!raf) prev = 0;
     }
     menu.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'touch' || reduced.matches) return;
@@ -226,8 +239,13 @@
 
   /* Card hover helper: a strip / layer that drifts with the pointer. `apply(x)` gets a smoothed value. */
   RT.follow = function (apply, k) {
-    let t = 0, c = 0, raf = 0;
-    const loop = () => { c += (t - c) * (k || 0.09); apply(c); raf = Math.abs(t - c) > 0.02 ? requestAnimationFrame(loop) : 0; if (!raf) { c = t; apply(c); } };
+    let t = 0, c = 0, raf = 0, prev = 0;
+    const loop = (now) => {
+      const dt = prev && now ? now - prev : 1000 / 60; prev = now || 0;
+      c += (t - c) * RT.damp(k || 0.09, dt); apply(c);
+      raf = Math.abs(t - c) > 0.02 ? requestAnimationFrame(loop) : 0;
+      if (!raf) { c = t; apply(c); prev = 0; }
+    };
     return { set(v, instant) { t = v; if (instant) { c = v; apply(c); } else if (!raf) raf = requestAnimationFrame(loop); }, get value() { return c; } };
   };
 
