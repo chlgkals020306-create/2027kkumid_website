@@ -107,7 +107,7 @@
         `<div class="dz__strip" id="dz-strip" data-strip>` +
           works.map((w, n) => `<a class="wcard" href="${workHref(w.id)}">` +
             `<span class="wcard__name">${esc(S.get.designersOf(w).map((x) => x.name).join(' · '))}</span><span class="wcard__title">${esc(w.title)}</span><span class="wcard__group">${esc(S.get.subjectOf(w))}</span>` +
-            `<span class="wcard__media"><span class="card__media">${w.thumb ? `<img src="${esc(w.thumb)}" alt="" loading="lazy" decoding="async">` : `<span class="card__ph">${pad(n + 1)}</span>`}</span><span class="card__shade"></span></span>` +
+            `<span class="wcard__media"><span class="card__media">${w.thumb ? `<img src="${esc(w.thumb)}" alt="" loading="lazy" decoding="async">` : `<span class="card__ph"></span>`}</span><span class="card__shade"></span></span>` +
           `</a>`).join('') +
         `</div>` +
       `</section>`;
@@ -261,7 +261,7 @@
     } else if (w.thumb) {                                           // only a thumbnail was handed in → shown as a poster
       add(`<img src="${esc(w.thumb)}" alt="${esc(w.title)}" decoding="async">`, 'work-media__item--poster');
     } else {
-      Array(S.workImages).fill(0).forEach((_, n) => add(`<div class="work-media__ph"><b>${pad(n + 1)}</b><span>${esc(w.title)} · 16 : 9 작품 이미지 자리</span></div>`));
+      Array(S.workImages).fill(0).forEach(() => add('<div class="work-media__ph"></div>'));   // images still to come: an empty grey 16:9 area
     }
   }
 
@@ -348,7 +348,7 @@
     const grid = $('[data-grid]');
     const entries = S.get.worksIn(g.id).map((w, n) => {
       const team = S.get.designersOf(w);
-      const node = card({ href: workHref(w.id), img: w.thumb, ph: pad(n + 1), title: w.title, sub: team.map((d) => d.name).join(' · ') });
+      const node = card({ href: workHref(w.id), img: w.thumb, ph: '', title: w.title, sub: team.map((d) => d.name).join(' · ') });
       grid.appendChild(node);
       return { node, href: workHref(w.id), text: `${w.title} ${team.map((d) => `${d.name} ${d.en.join('')}`).join(' ')} ${w.subject || ''}` };
     });

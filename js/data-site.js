@@ -194,7 +194,7 @@ RT.site = {
       intro: ["상상을 좇는 디자이너입니다."],
       email: "bchwan17@gmail.com", instagram: "@baek2i", prefer: "instagram",
       answers: ["멋있다 !", "볼 맛 나는 맛", "침대와 가족 ❤"] },
-    { id: "seo-jiwoo", name: "서지우", en: ["SEO", "JIWOO"], pos: 46.1,
+    { id: "seo-jiwoo", name: "서지우", en: ["SEO", "JIWOO"], pos: 46.0,
       intro: ["좋아하는 것들을 모아", "더 예쁘게 만들어 갑니다"],
       email: "ffgty1234@gmail.com", instagram: "", prefer: "email",
       answers: ["도망가자!!", "불량식품 맛", "환전해 둔 돈, 동기들"] },
@@ -226,7 +226,7 @@ RT.site = {
       intro: ["귀여운 것과 세련된 것, 여백의 미를 추구하는 디자이너입니다."],
       email: "slad0110@naver.com", instagram: "@sur__0110", prefer: "instagram",
       answers: ["고생했다, 이제 하고 싶은 것들 잔뜩 해보자!", "탱글탱글하고 달콤한 과일 젤리 맛", "같이 새벽까지 버티며 헛소리를 들어준 지인들과 포기하지 않도록 도와준 교수님들."] },
-    { id: "yang-juyeon", name: "양주연", en: ["YANG", "JUYEON"], pos: 60.6,
+    { id: "yang-juyeon", name: "양주연", en: ["YANG", "JUYEON"], pos: 60.9,
       intro: ["정해진 정답보다 재미있는 오답을 찾아갑니다."],
       email: "yangju5855@gmail.com", instagram: "@yangju.archive", prefer: "instagram",
       answers: ["일단 웃자!", "해리포터 랜덤젤리맛", "24시간 내내 함께한 음악과 동기들, 가족"] },
@@ -379,7 +379,7 @@ RT.site = {
      Every student shows 1 to 3 works. A student without an entry there gets one grey
      placeholder card, so the profile can still be clicked through. */
   works: (window.RT.worksData || []).slice(),
-  workImages: 4,                    // placeholder blocks on the work page while a work has no images
+  workImages: 1,                    // empty grey 16:9 areas on the work page while a work has no images yet
   untitled: '[제목 확인 필요]',       // shown while a work's title is still ''
   pending: '[작품 준비 중]'          // title of the placeholder card
 };
